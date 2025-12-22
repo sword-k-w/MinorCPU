@@ -12,6 +12,14 @@ class CPU extends Module {
     val io_buffer_full = Input(Bool())
     val dbgreg_dout    = Output(UInt(32.W))
   })
-
   
+  // default
+  io.mem_dout := 0.U
+  io.mem_a := 0.U
+  io.mem_wr := 0.U
+  io.dbgreg_dout := 0.U
+}
+
+object CPUMain extends App {
+  (new chisel3.stage.ChiselStage).emitVerilog(new CPU(), args = args)
 }
