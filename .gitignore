@@ -6,3 +6,12 @@ testspace/*
 *.dump
 *.data
 fpga/fpga
+
+testcase/**
+script/**
+fpga/**
+doc/**
+.vscode/**
+target/**
+test_run_dir/**
+project/**
