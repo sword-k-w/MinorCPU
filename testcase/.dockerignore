@@ -1,5 +1,0 @@
-Dockerfile
-.dockerignore
-/var/cache/pacman/pkg/*
-/var/lib/pacman/db.lck
-/etc/pacman.d/mirrorlist
