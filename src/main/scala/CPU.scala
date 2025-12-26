@@ -2,7 +2,7 @@ import chisel3._
 import chisel3.util._
 
 class CPU extends Module {
-  val io = IO(new Bundle{
+  val io = IO(new Bundle {
     val rdy_in         = Input(Bool())
     val mem_din        = Input(UInt(8.W))
     val mem_dout       = Output(UInt(8.W))
