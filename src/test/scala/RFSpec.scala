@@ -40,10 +40,10 @@ class RFSpec extends AnyFlatSpec with ChiselScalatestTester {
 
       dut.clock.step(1)
 
-      dut.io.commit_valid.poke(true.B)
-      dut.io.commit_reg_id.poke(1.U)
-      dut.io.commit_rob_id.poke(2.U)
-      dut.io.commit_value.poke(3.U)
+      dut.io.commit_info.valid.poke(true.B)
+      dut.io.commit_info.bits.reg_id.poke(1.U)
+      dut.io.commit_info.bits.rob_id.poke(2.U)
+      dut.io.commit_info.bits.value.poke(3.U)
 
       dut.clock.step(1)
 

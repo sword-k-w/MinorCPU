@@ -1,6 +1,11 @@
 import chisel3._
 import chisel3.util._
 
+class CommitInfo extends Bundle {
+  val rob_id = UInt(5.W)
+  val reg_id = UInt(5.W)
+  val value = UInt(32.W)
+}
 
 // If new dependence addr and qry addr are same, the qry can't see new dependence.
 // Which is right, e.g. add x1 x1 x2
@@ -9,10 +14,7 @@ class RF extends Module {
   val io = IO(new Bundle {
     val predict_failed = Input(Bool())
 
-    val commit_valid  = Input(Bool())
-    val commit_rob_id = Input(UInt(5.W))
-    val commit_reg_id = Input(UInt(5.W))
-    val commit_value  = Input(UInt(32.W))
+    val commit_info = Flipped(Valid(new CommitInfo))
 
     val new_dependence_valid = Input(Bool())
     val new_reg_id           = Input(UInt(5.W))
@@ -38,10 +40,10 @@ class RF extends Module {
       has_dependence(i) := false.B
     }
   } .otherwise {
-    when (io.commit_valid && io.commit_reg_id =/= 0.U) {
-      reg_data(io.commit_reg_id) := io.commit_value
-      when (io.commit_rob_id === dependence(io.commit_reg_id)) {
-        has_dependence(io.commit_reg_id) := false.B
+    when (io.commit_info.valid && io.commit_info.bits.reg_id =/= 0.U) {
+      reg_data(io.commit_info.bits.reg_id) := io.commit_info.bits.value
+      when (io.commit_info.bits.rob_id === dependence(io.commit_info.bits.reg_id)) {
+        has_dependence(io.commit_info.bits.reg_id) := false.B
       }
     }
     when (io.new_dependence_valid && io.new_reg_id =/= 0.U) {

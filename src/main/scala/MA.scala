@@ -47,10 +47,10 @@ class MA extends Module {
   } .otherwise {
     when (state) {
       val next_index = index + 1.U
-      tmp_array(index & 3.U) := io.mem_din    
+      tmp_array(index(1, 0) & 3.U) := io.mem_din
       io.mem_a := next_index
       index := next_index
-      when ((next_index & 3.U) === 3.U) {
+      when ((next_index(1, 0) & 3.U) === 3.U) {
         state := false.B
         just_finished := true.B
       }
