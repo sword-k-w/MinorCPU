@@ -7,10 +7,10 @@ class RFSpec extends AnyFlatSpec with ChiselScalatestTester {
   "RF" should "pass" in {
     test(new RF) { dut =>
       dut.io.predict_failed.poke(false.B)
-      dut.io.commit_valid.poke(false.B)
-      dut.io.commit_rob_id.poke(0.U)
-      dut.io.commit_reg_id.poke(0.U)
-      dut.io.commit_value.poke(0.U)
+      dut.io.commit_info.valid.poke(false.B)
+      dut.io.commit_info.bits.rob_id.poke(0.U)
+      dut.io.commit_info.bits.reg_id.poke(0.U)
+      dut.io.commit_info.bits.value.poke(0.U)
 
       dut.io.new_dependence_valid.poke(false.B)
       dut.io.new_reg_id.poke(0.U)

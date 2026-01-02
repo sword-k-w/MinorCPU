@@ -38,6 +38,12 @@ class RoB extends Module {
     val commit_to_rf = Valid(new CommitInfo)
 
     val modified_pc = Valid(UInt(32.W))
+
+    val qry_index = Input(UInt(5.W))
+    val qry_ready = Output(Bool())
+    val qry_value = Output(UInt(32.W))
+
+    val rob_tail = Output(UInt(5.W))
   })
 
   val entry = Reg(Vec(32, new RoBEntry))
@@ -116,4 +122,9 @@ class RoB extends Module {
   io.broadcast_to_lsq.valid := broadcast_to_lsq_valid
   io.commit_to_rf.bits := commit_to_rf
   io.commit_to_rf.valid := commit_to_rf_valid
+
+  io.qry_ready := entry(io.qry_index).ready
+  io.qry_value := entry(io.qry_index).value
+
+  io.rob_tail := tail
 }
