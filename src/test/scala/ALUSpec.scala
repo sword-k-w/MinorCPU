@@ -4,7 +4,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class ALUSpec extends AnyFlatSpec with ChiselScalatestTester {
   "ALU" should "pass" in {
-    test(new ALU) {dut =>
+    test(new ALU) { dut =>
       dut.io.in1.poke(5.U)
       dut.io.in2.poke(3.U)
       dut.io.op.poke("b0_000".U)

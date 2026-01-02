@@ -36,7 +36,7 @@ class FESpec extends AnyFlatSpec with ChiselScalatestTester {
     ma.io.predict_failed <> io.modified_pc.valid
   }
   "FE" should "pass" in {
-    test(new FE) {dut =>
+    test(new FE) { dut =>
       var cycleCount = 0
       println(s"\n[Cycle $cycleCount]")
 
@@ -67,7 +67,7 @@ class FESpec extends AnyFlatSpec with ChiselScalatestTester {
         for (i <- 0 until length) {
           var flag = false
           breakable {
-            for (t <- 0 until max_waiting_time) {
+            for (_ <- 0 until max_waiting_time) {
               if (dut.io.instruction.valid.peekBoolean()) {
                 flag = true
                 break()
