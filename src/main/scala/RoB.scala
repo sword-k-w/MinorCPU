@@ -1,13 +1,13 @@
 import chisel3._
 import chisel3.util._
 
-class ALUBroadcastResult extends Bundle {
+class ALUToRoBResult extends Bundle {
   val dest = UInt(5.W)
   val value = UInt(32.W)
   val addr = UInt(32.W)
 }
 
-class LSQBroadcastResult extends Bundle {
+class LSQToRoBResult extends Bundle {
   val dest = UInt(5.W)
   val value = UInt(32.W)
 }
@@ -28,10 +28,10 @@ class RoB extends Module {
     val new_instruction = Flipped(Decoupled(new Instruction))
 
     // remember delay a cycle in ALU
-    val alu_broadcast_result = Flipped(Valid(new ALUBroadcastResult))
+    val alu_broadcast_result = Flipped(Valid(new ALUToRoBResult))
 
     // remember delay a cycle in LSQ
-    val lsq_broadcast_result = Flipped(Valid(new LSQBroadcastResult))
+    val lsq_broadcast_result = Flipped(Valid(new LSQToRoBResult))
 
     val broadcast_to_lsq = Valid(new RoBBroadcastResult)
 
@@ -39,9 +39,13 @@ class RoB extends Module {
 
     val modified_pc = Valid(UInt(32.W))
 
-    val qry_index = Input(UInt(5.W))
-    val qry_ready = Output(Bool())
-    val qry_value = Output(UInt(32.W))
+    val qry1_index = Input(UInt(5.W))
+    val qry1_ready = Output(Bool())
+    val qry1_value = Output(UInt(32.W))
+
+    val qry2_index = Input(UInt(5.W))
+    val qry2_ready = Output(Bool())
+    val qry2_value = Output(UInt(32.W))
 
     val rob_tail = Output(UInt(5.W))
   })
@@ -107,24 +111,26 @@ class RoB extends Module {
         commit_to_rf.reg_id := entry(head).instruction.rd
         commit_to_rf.value := entry(head).value
       }
+      head := head + 1.U
     }
-    head := head + 1.U
+    when (io.new_instruction.valid) {
+      entry(tail).instruction := io.new_instruction.bits
+      entry(tail).ready := false.B
+      tail := tail + 1.U
+    }
+    io.new_instruction.ready := head + 2.U === tail
   }
 
-  when (io.new_instruction.valid) {
-    entry(tail).instruction := io.new_instruction.bits
-    entry(tail).ready := false.B
-    tail := tail + 1.U
-  }
-
-  io.new_instruction.ready := head + 2.U === tail
   io.broadcast_to_lsq.bits := broadcast_to_lsq
   io.broadcast_to_lsq.valid := broadcast_to_lsq_valid
   io.commit_to_rf.bits := commit_to_rf
   io.commit_to_rf.valid := commit_to_rf_valid
 
-  io.qry_ready := entry(io.qry_index).ready
-  io.qry_value := entry(io.qry_index).value
+  io.qry1_ready := entry(io.qry1_index).ready
+  io.qry1_value := entry(io.qry1_index).value
+
+  io.qry2_ready := entry(io.qry2_index).ready
+  io.qry2_value := entry(io.qry2_index).value
 
   io.rob_tail := tail
 }
