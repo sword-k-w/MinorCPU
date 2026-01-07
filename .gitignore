@@ -18,3 +18,4 @@ project/**
 generated/**
 build/**
 .idea/**
+.bsp/**
