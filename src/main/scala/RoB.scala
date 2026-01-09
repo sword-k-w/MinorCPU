@@ -58,6 +58,9 @@ class RoB extends Module {
   val broadcast_to_lsq_valid = Reg(Bool())
   val broadcast_to_lsq = Reg(new RoBBroadcastResult)
 
+  val new_tail = UInt(5.W)
+  val new_entry = Vec(32, new RoBEntry)
+
   broadcast_to_lsq_valid := false.B
   broadcast_to_lsq.addr := 0.U
   broadcast_to_lsq.value := 0.U
@@ -71,55 +74,67 @@ class RoB extends Module {
   commit_to_rf.reg_id := 0.U
   commit_to_rf.rob_id := 0.U
 
+  for (i <- 0 until 32) {
+    new_entry(i.U) := entry(i.U)
+  }
+
   when (predict_failed) {
     head := 0.U
-    tail := 0.U
+    new_tail := 0.U
     predict_failed := false.B
     io.new_instruction.ready := true.B
-  } .otherwise {
-    when (io.alu_broadcast_result.valid) {
-      entry(io.alu_broadcast_result.bits.dest).ready := true.B
-      entry(io.alu_broadcast_result.bits.dest).value := io.alu_broadcast_result.bits.value
-      entry(io.alu_broadcast_result.bits.dest).addr := io.alu_broadcast_result.bits.addr
+    for (i <- 0 until 32) {
+      new_entry(i.U) := entry(i.U)
     }
-    when (io.lsq_broadcast_result.valid) {
-      entry(io.lsq_broadcast_result.bits.dest).ready := true.B
-      entry(io.lsq_broadcast_result.bits.dest).value := io.lsq_broadcast_result.bits.value
+  } .otherwise {
+    for (i <- 0 until 32) {
+      when (i.U === io.alu_broadcast_result.bits.dest && io.alu_broadcast_result.valid) {
+        new_entry(i.U).ready := true.B
+        new_entry(i.U).value := io.alu_broadcast_result.bits.value
+        new_entry(i.U).addr := io.alu_broadcast_result.bits.addr
+      } .elsewhen (i.U === io.lsq_broadcast_result.bits.dest && io.lsq_broadcast_result.valid) {
+        new_entry(i.U).ready := true.B
+        new_entry(i.U).value := io.lsq_broadcast_result.bits.value
+      } .elsewhen (i.U === tail && io.new_instruction.valid) {
+        new_entry(i.U).instruction := io.new_instruction.bits
+        new_entry(i.U).ready := false.B
+      }
     }
 
     // commit.
     // because the update of entry has one cycle latency, add special judge for commit condition
-    when (head =/= tail && (entry(head).ready
+    when (head =/= new_tail && (new_entry(head).ready
       || (io.alu_broadcast_result.valid && io.alu_broadcast_result.bits.dest === head)
       || (io.lsq_broadcast_result.valid && io.lsq_broadcast_result.bits.dest === head))) {
-      when (entry(head).instruction.op === "b11000".U || entry(head).instruction.op === "b11001".U) { // branch or jalr
-        when (entry(head).instruction.predict_address =/= entry(head).value(31, 2)) {
+      when (new_entry(head).instruction.op === "b11000".U || new_entry(head).instruction.op === "b11001".U) { // branch or jalr
+        when (new_entry(head).instruction.predict_address =/= new_entry(head).value(31, 2)) {
           predict_failed := true.B
           io.predict_failed := true.B
           io.modified_pc.valid := true.B
-          io.modified_pc.bits := entry(head).value
+          io.modified_pc.bits := new_entry(head).value
           // maybe something else need to do?
         }
-      } .elsewhen(entry(head).instruction.op === "b01000".U) { // S
+      } .elsewhen(new_entry(head).instruction.op === "b01000".U) { // S
         broadcast_to_lsq_valid := true.B
-        broadcast_to_lsq.addr := entry(head).addr
-        broadcast_to_lsq.value := entry(head).value
+        broadcast_to_lsq.addr := new_entry(head).addr
+        broadcast_to_lsq.value := new_entry(head).value
         broadcast_to_lsq.dest := head
       } .otherwise {
         commit_to_rf_valid := true.B
         commit_to_rf.rob_id := head
-        commit_to_rf.reg_id := entry(head).instruction.rd
-        commit_to_rf.value := entry(head).value
+        commit_to_rf.reg_id := new_entry(head).instruction.rd
+        commit_to_rf.value := new_entry(head).value
       }
       head := head + 1.U
     }
-    when (io.new_instruction.valid) {
-      entry(tail).instruction := io.new_instruction.bits
-      entry(tail).ready := false.B
-      tail := tail + 1.U
-    }
-    io.new_instruction.ready := head + 2.U === tail
+
+    io.new_instruction.ready := head + 2.U =/= tail
   }
+
+  for (i <- 0 until 32) {
+    entry(i.U) := new_entry(i.U)
+  }
+  tail := new_tail
 
   io.broadcast_to_lsq.bits := broadcast_to_lsq
   io.broadcast_to_lsq.valid := broadcast_to_lsq_valid

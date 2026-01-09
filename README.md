@@ -7,9 +7,3 @@ The main part of our cpu is written in Chisel. To get verilog version, run `sbt 
 **Always use big endian in README!** 
 
 eg: 0010 means 2th-low bit is 1.
-
-## Something need to do
-
-The assignment of entry in RoB and LSQ is incorrect. (multi-assignment)
-
-Use the way in RS to handle it.
