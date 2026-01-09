@@ -130,7 +130,18 @@ class LSQ extends Module {
         broadcast_to_rob_valid := true.B
         broadcast_to_rob.value := io.memory_result.bits
         broadcast_to_rob.dest := new_entry(head).dest
-        head := head + 1.U
+        val new_head = Wire(UInt(5.W))
+        new_head := head + 1.U
+        head := new_head
+        when (new_head =/= new_tail && new_entry(new_head).ready) {
+          assert(new_entry(new_head).instruction.op === "b00000".U, "a committed store occurs behind a uncommitted load!")
+          when (io.wb_is_empty) {
+            memory_quest_valid := true.B
+            memory_quest.addr := new_entry(new_head).address
+            memory_quest.size := new_entry(new_head).instruction.funct(1, 0)
+            memory_quest.wr_en := false.B
+          }
+        }
       } .otherwise {
         when (io.wb_is_empty) {
           memory_quest_valid := true.B
@@ -141,6 +152,7 @@ class LSQ extends Module {
       }
     }
   }
+  printf("%d\n", tail)
   tail := new_tail
   for (i <- 0 until 32) {
     entry(i.U) := new_entry(i.U)

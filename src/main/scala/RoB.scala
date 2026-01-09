@@ -147,5 +147,5 @@ class RoB extends Module {
   io.qry2_ready := entry(io.qry2_index).ready
   io.qry2_value := entry(io.qry2_index).value
 
-  io.rob_tail := tail
+  io.rob_tail := new_tail
 }
