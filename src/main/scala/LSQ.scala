@@ -54,7 +54,7 @@ class LSQ extends Module {
 
     val store_to_wb = Valid(new AddrValue)
 
-    val is_full = Output(UInt(5.W))
+    val is_full = Output(Bool())
   })
 
   val entry = Reg(Vec(32, new LSQEntry))
@@ -73,6 +73,7 @@ class LSQ extends Module {
   val store_to_wb = Reg(new AddrValue)
   val store_to_wb_valid = RegInit(false.B)
 
+  val new_head = Wire(UInt(5.W))
   val new_tail = Wire(UInt(5.W))
   val new_entry = Wire(Vec(32, new LSQEntry))
 
@@ -80,7 +81,7 @@ class LSQ extends Module {
   broadcast_to_rs_valid := false.B
   broadcast_to_rob_valid := false.B
 
-  io.is_full := head + 2.U === tail
+  new_head := head
   new_tail := tail
 
   when (io.predict_failed) {
@@ -119,7 +120,7 @@ class LSQ extends Module {
         store_to_wb.addr := new_entry(head).address
         store_to_wb.value := new_entry(head).value
         store_to_wb.size := new_entry(head).instruction.funct(1, 0)
-        head := head + 1.U
+        new_head := head + 1.U
       }
     } .otherwise {
       when (io.memory_result.valid) {
@@ -130,9 +131,7 @@ class LSQ extends Module {
         broadcast_to_rob_valid := true.B
         broadcast_to_rob.value := io.memory_result.bits
         broadcast_to_rob.dest := new_entry(head).dest
-        val new_head = Wire(UInt(5.W))
         new_head := head + 1.U
-        head := new_head
         when (new_head =/= new_tail && new_entry(new_head).ready) {
           assert(new_entry(new_head).instruction.op === "b00000".U, "a committed store occurs behind a uncommitted load!")
           when (io.wb_is_empty) {
@@ -152,8 +151,9 @@ class LSQ extends Module {
       }
     }
   }
-  printf("%d\n", tail)
+  head := new_head
   tail := new_tail
+  io.is_full := new_head + 1.U === new_tail
   for (i <- 0 until 32) {
     entry(i.U) := new_entry(i.U)
   }

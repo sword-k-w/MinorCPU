@@ -25,6 +25,8 @@ class RoB extends Module {
   val io = IO(new Bundle {
     val predict_failed = Output(Bool())
 
+    val wb_is_full = Input(Bool())
+
     val new_instruction = Flipped(Decoupled(new Instruction))
 
     // remember delay a cycle in ALU
@@ -58,6 +60,7 @@ class RoB extends Module {
   val broadcast_to_lsq_valid = Reg(Bool())
   val broadcast_to_lsq = Reg(new RoBBroadcastResult)
 
+  val new_head = Wire(UInt(5.W))
   val new_tail = Wire(UInt(5.W))
   val new_entry = Wire(Vec(32, new RoBEntry))
 
@@ -77,12 +80,13 @@ class RoB extends Module {
   for (i <- 0 until 32) {
     new_entry(i.U) := entry(i.U)
   }
+  new_head := head
+  new_tail := tail
 
   when (predict_failed) {
-    head := 0.U
+    new_head := 0.U
     new_tail := 0.U
     predict_failed := false.B
-    io.new_instruction.ready := true.B
     for (i <- 0 until 32) {
       new_entry(i.U) := entry(i.U)
     }
@@ -98,6 +102,7 @@ class RoB extends Module {
       } .elsewhen (i.U === tail && io.new_instruction.valid) {
         new_entry(i.U).instruction := io.new_instruction.bits
         new_entry(i.U).ready := false.B
+        new_tail := tail + 1.U
       }
     }
 
@@ -112,28 +117,32 @@ class RoB extends Module {
           io.predict_failed := true.B
           io.modified_pc.valid := true.B
           io.modified_pc.bits := new_entry(head).value
+          new_head := head + 1.U
           // maybe something else need to do?
         }
       } .elsewhen(new_entry(head).instruction.op === "b01000".U) { // S
-        broadcast_to_lsq_valid := true.B
-        broadcast_to_lsq.addr := new_entry(head).addr
-        broadcast_to_lsq.value := new_entry(head).value
-        broadcast_to_lsq.dest := head
+        when (!io.wb_is_full) {
+          broadcast_to_lsq_valid := true.B
+          broadcast_to_lsq.addr := new_entry(head).addr
+          broadcast_to_lsq.value := new_entry(head).value
+          broadcast_to_lsq.dest := head
+          new_head := head + 1.U
+        }
       } .otherwise {
         commit_to_rf_valid := true.B
         commit_to_rf.rob_id := head
         commit_to_rf.reg_id := new_entry(head).instruction.rd
         commit_to_rf.value := new_entry(head).value
+        new_head := head + 1.U
       }
-      head := head + 1.U
     }
-
-    io.new_instruction.ready := head + 2.U =/= tail
   }
+  io.new_instruction.ready := new_head + 1.U =/= new_tail
 
   for (i <- 0 until 32) {
     entry(i.U) := new_entry(i.U)
   }
+  head := new_head
   tail := new_tail
 
   io.broadcast_to_lsq.bits := broadcast_to_lsq

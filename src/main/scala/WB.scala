@@ -23,6 +23,7 @@ class WB extends Module {
   val tail = RegInit(0.U(3.W))
   val entry = Reg(Vec(8, new AddrValue))
 
+  val new_head = Wire(UInt(3.W))
   val new_tail = Wire(UInt(3.W))
   val new_entry = Wire(Vec(8, new AddrValue))
 
@@ -49,7 +50,7 @@ class WB extends Module {
 
   when (head =/= new_tail) {
     when (io.memory_result.valid) {
-      head := head + 1.U
+      new_head := head + 1.U
     } .otherwise {
       memory_quest_valid := true.B
       memory_quest.addr := new_entry(head).addr
@@ -59,13 +60,14 @@ class WB extends Module {
     }
   }
 
+  head := new_head
   tail := new_tail
   for (i <- 0 until 8) {
     entry(i.U) := new_entry(i.U)
   }
 
-  io.is_empty := head === tail
-  io.is_full := head + 2.U === tail
+  io.is_empty := new_head === new_tail
+  io.is_full := new_head + 1.U === new_tail
   io.memory_quest.valid := memory_quest_valid
   io.memory_quest.bits := memory_quest
 }
