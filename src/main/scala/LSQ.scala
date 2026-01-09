@@ -83,7 +83,6 @@ class LSQ extends Module {
 
   new_head := head
   new_tail := tail
-
   when (io.predict_failed) {
     when (head =/= tail && entry(head).instruction.op === "b01000".U && entry(head).ready) {
       new_tail := head + 1.U
@@ -153,7 +152,7 @@ class LSQ extends Module {
   }
   head := new_head
   tail := new_tail
-  io.is_full := new_head + 1.U === new_tail
+  io.is_full := new_tail + 1.U === new_head
   for (i <- 0 until 32) {
     entry(i.U) := new_entry(i.U)
   }

@@ -22,7 +22,7 @@ class LSQSpec extends AnyFlatSpec with ChiselScalatestTester {
       val memory_quest_from_wb = Valid(new MemoryQuest)
       val memory_result_for_wb = Flipped(Valid(UInt(32.W)))
 
-      val lsq_is_full = Output(UInt(5.W))
+      val lsq_is_full = Output(Bool())
     })
     val lsq = Module(new LSQ)
     val wb = Module(new WB)
@@ -250,6 +250,133 @@ class LSQSpec extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.memory_quest_from_lsq.bits.addr.expect(15.U)
 
       // the rest is omitted
+    }
+  }
+  "LSQ" should "handle single store instruction" in {
+    test(new TestLSQ) { dut =>
+      // 初始化
+      dut.io.predict_failed.poke(false.B)
+      dut.io.new_instruction.bits.funct.poke(2.U) // size = 2 (32-bit)
+      dut.io.new_instruction.bits.immediate.poke(0.U)
+      dut.io.new_instruction.bits.rs2.poke(0.U)
+      dut.io.new_instruction.bits.rs1.poke(0.U)
+      dut.io.new_instruction.bits.rd.poke(0.U)
+      dut.io.new_instruction.bits.predict_address.poke(0.U)
+      dut.io.rob_broadcast_result.valid.poke(false.B)
+      dut.io.alu_broadcast_result.valid.poke(false.B)
+      dut.io.memory_result_for_lsq.valid.poke(false.B)
+      dut.io.memory_result_for_wb.valid.poke(false.B)
+
+      // Cycle 0: 送入 Store 指令（op = b01000）
+      dut.io.rob_tail.poke(0.U)
+      dut.io.new_instruction.bits.op.poke("b01000".U)
+      dut.io.new_instruction.valid.poke(true.B)
+      dut.clock.step(1)
+      dut.io.new_instruction.valid.poke(false.B)
+
+      // Cycle 1: ROB 广播 Store 指令的地址和值
+      dut.io.rob_broadcast_result.bits.dest.poke(0.U)
+      dut.io.rob_broadcast_result.bits.addr.poke(0x100.U)
+      dut.io.rob_broadcast_result.bits.value.poke(0x12345678.U)
+      dut.io.rob_broadcast_result.valid.poke(true.B)
+      dut.clock.step(1)
+      dut.io.rob_broadcast_result.valid.poke(false.B)
+
+      // Cycle 2: 检查 Store 送入 WB，LSQ head 前进
+      dut.clock.step(1)
+
+      // Cycle 3: WB 发起内存写请求
+      dut.io.memory_quest_from_wb.valid.expect(true.B)
+      dut.io.memory_quest_from_wb.bits.wr_en.expect(true.B)
+      dut.io.memory_quest_from_wb.bits.addr.expect(0x100.U)
+      dut.io.memory_quest_from_wb.bits.value.expect(0x12345678.U)
+      dut.io.memory_quest_from_wb.bits.size.expect(2.U)
+      dut.clock.step(1)
+
+      // Cycle 4: 响应 WB 的内存写请求，WB head 前进
+      dut.io.memory_result_for_wb.valid.poke(true.B)
+      dut.clock.step(1)
+      dut.io.memory_result_for_wb.valid.poke(false.B)
+      dut.io.memory_quest_from_wb.valid.expect(false.B) // WB 队列空，停止请求
+    }
+  }
+  "LSQ" should "reset on prediction failure" in {
+    test(new TestLSQ) { dut =>
+      // 初始化
+      dut.io.predict_failed.poke(false.B)
+      dut.io.new_instruction.bits.funct.poke(2.U)
+      dut.io.new_instruction.bits.immediate.poke(0.U)
+      dut.io.new_instruction.bits.rs2.poke(0.U)
+      dut.io.new_instruction.bits.rs1.poke(0.U)
+      dut.io.new_instruction.bits.rd.poke(0.U)
+      dut.io.new_instruction.bits.predict_address.poke(0.U)
+      dut.io.rob_broadcast_result.valid.poke(false.B)
+      dut.io.alu_broadcast_result.valid.poke(false.B)
+      dut.io.memory_result_for_lsq.valid.poke(false.B)
+      dut.io.memory_result_for_wb.valid.poke(false.B)
+
+      // Cycle 0: 送入 Load 指令
+      dut.io.rob_tail.poke(0.U)
+      dut.io.new_instruction.bits.op.poke("b00000".U)
+      dut.io.new_instruction.valid.poke(true.B)
+      dut.clock.step(1)
+      dut.io.new_instruction.valid.poke(false.B)
+
+      // Cycle 1: 送入 Store 指令
+      dut.io.rob_tail.poke(1.U)
+      dut.io.new_instruction.bits.op.poke("b01000".U)
+      dut.io.new_instruction.valid.poke(true.B)
+      dut.clock.step(1)
+      dut.io.new_instruction.valid.poke(false.B)
+
+      // Cycle 2: 触发预测失败
+      dut.io.predict_failed.poke(true.B)
+      dut.clock.step(1)
+      dut.io.predict_failed.poke(false.B)
+
+      // Cycle 3: 检查 LSQ 指针重置（head = tail），指令被清空
+      dut.io.memory_quest_from_lsq.valid.expect(false.B)
+      dut.clock.step(1)
+
+      // 验证后续送入新指令正常
+      dut.io.rob_tail.poke(2.U)
+      dut.io.new_instruction.bits.op.poke("b00000".U)
+      dut.io.new_instruction.valid.poke(true.B)
+      dut.clock.step(1)
+      dut.io.new_instruction.valid.poke(false.B)
+
+      dut.io.alu_broadcast_result.bits.dest.poke(2.U)
+      dut.io.alu_broadcast_result.bits.addr.poke(0x200.U)
+      dut.io.alu_broadcast_result.valid.poke(true.B)
+      dut.clock.step(1)
+      dut.io.alu_broadcast_result.valid.poke(false.B)
+
+      dut.io.memory_quest_from_lsq.valid.expect(true.B)
+      dut.io.memory_quest_from_lsq.bits.addr.expect(0x200.U)
+    }
+  }
+  "LSQ" should "reject new instruction when full" in {
+    test(new TestLSQ) { dut =>
+      // 初始化
+      dut.io.predict_failed.poke(false.B)
+      dut.io.rob_broadcast_result.valid.poke(false.B)
+      dut.io.alu_broadcast_result.valid.poke(false.B)
+      dut.io.memory_result_for_lsq.valid.poke(false.B)
+      dut.io.memory_result_for_wb.valid.poke(false.B)
+
+      // 循环送入 32 个 Load 指令（触发 LSQ 满）
+      for (i <- 0 until 31) {
+        dut.io.rob_tail.poke(i.U)
+        dut.io.new_instruction.bits.op.poke("b00000".U)
+        dut.io.new_instruction.bits.funct.poke(2.U)
+        dut.io.new_instruction.valid.poke(true.B)
+        dut.clock.step(1)
+      }
+
+      // LSQ 满
+      dut.io.new_instruction.valid.poke(false.B)
+      dut.io.lsq_is_full.expect(true.B) // 满状态标记
+      dut.clock.step(1)
     }
   }
 }

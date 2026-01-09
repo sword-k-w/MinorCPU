@@ -31,6 +31,7 @@ class WB extends Module {
   val memory_quest_valid = RegInit(false.B)
 
   memory_quest_valid := false.B
+  new_head := head
 
   when (io.new_instruction.valid) {
     for (i <- 0 until 8) {
@@ -67,7 +68,7 @@ class WB extends Module {
   }
 
   io.is_empty := new_head === new_tail
-  io.is_full := new_head + 1.U === new_tail
+  io.is_full := new_tail + 1.U === new_head
   io.memory_quest.valid := memory_quest_valid
   io.memory_quest.bits := memory_quest
 }

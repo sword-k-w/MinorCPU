@@ -137,7 +137,7 @@ class RoB extends Module {
       }
     }
   }
-  io.new_instruction.ready := new_head + 1.U =/= new_tail
+  io.new_instruction.ready := new_tail + 1.U =/= new_head
 
   for (i <- 0 until 32) {
     entry(i.U) := new_entry(i.U)
