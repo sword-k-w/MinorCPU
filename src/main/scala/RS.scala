@@ -58,9 +58,9 @@ class RS extends Module {
   })
 
   val entry = Reg(Vec(32, new RSEntry))
-  val new_entry = Vec(32, new RSEntry)
-  val merge_entry = Vec(31, new RSEntry)
-  val merge_index = Vec(31, UInt(5.W))
+  val new_entry = Wire(Vec(32, new RSEntry))
+  val merge_entry = Wire(Vec(31, new RSEntry))
+  val merge_index = Wire(Vec(31, UInt(5.W)))
 
   val alu_quest = Reg(new ALUQuest)
   val alu_quest_valid = Reg(Bool())

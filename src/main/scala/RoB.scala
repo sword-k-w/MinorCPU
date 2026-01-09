@@ -58,8 +58,8 @@ class RoB extends Module {
   val broadcast_to_lsq_valid = Reg(Bool())
   val broadcast_to_lsq = Reg(new RoBBroadcastResult)
 
-  val new_tail = UInt(5.W)
-  val new_entry = Vec(32, new RoBEntry)
+  val new_tail = Wire(UInt(5.W))
+  val new_entry = Wire(Vec(32, new RoBEntry))
 
   broadcast_to_lsq_valid := false.B
   broadcast_to_lsq.addr := 0.U

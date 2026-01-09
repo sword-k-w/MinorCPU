@@ -73,11 +73,11 @@ class LSQ extends Module {
   val store_to_wb = Reg(new AddrValue)
   val store_to_wb_valid = RegInit(false.B)
 
-  val new_tail = UInt(5.W)
-  val new_entry = Vec(32, new LSQEntry)
+  val new_tail = Wire(UInt(5.W))
+  val new_entry = Wire(Vec(32, new LSQEntry))
 
   memory_quest_valid := false.B
-  broadcast_to_rs := false.B
+  broadcast_to_rs_valid := false.B
   broadcast_to_rob_valid := false.B
 
   io.is_full := head + 2.U === tail

@@ -23,8 +23,8 @@ class WB extends Module {
   val tail = RegInit(0.U(3.W))
   val entry = Reg(Vec(8, new AddrValue))
 
-  val new_tail = UInt(3.W)
-  val new_entry = Vec(8, new AddrValue)
+  val new_tail = Wire(UInt(3.W))
+  val new_entry = Wire(Vec(8, new AddrValue))
 
   val memory_quest = Reg(new MemoryQuest)
   val memory_quest_valid = RegInit(false.B)
