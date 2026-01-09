@@ -89,7 +89,7 @@ class RoB extends Module {
 
     // commit.
     // because the update of entry has one cycle latency, add special judge for commit condition
-    when (head < tail && (entry(head).ready
+    when (head =/= tail && (entry(head).ready
       || (io.alu_broadcast_result.valid && io.alu_broadcast_result.bits.dest === head)
       || (io.lsq_broadcast_result.valid && io.lsq_broadcast_result.bits.dest === head))) {
       when (entry(head).instruction.op === "b11000".U || entry(head).instruction.op === "b11001".U) { // branch or jalr
@@ -100,7 +100,7 @@ class RoB extends Module {
           io.modified_pc.bits := entry(head).value
           // maybe something else need to do?
         }
-      } .elsewhen(entry(head).instruction.op === "b01000".U) {
+      } .elsewhen(entry(head).instruction.op === "b01000".U) { // S
         broadcast_to_lsq_valid := true.B
         broadcast_to_lsq.addr := entry(head).addr
         broadcast_to_lsq.value := entry(head).value
