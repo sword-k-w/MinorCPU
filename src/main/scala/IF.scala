@@ -15,8 +15,6 @@ class IF extends Module {
 
     val instruction = Decoupled(new Instruction)
 
-    val to_rs_for_jalr = UInt(12.W) // actual immediate for jalr
-
     val modified_pc = Flipped(Valid(UInt(32.W)))
   })
 
@@ -37,7 +35,7 @@ class IF extends Module {
   io.instruction.bits.funct := 0.U
   io.instruction.bits.immediate := 0.U
   io.instruction.bits.predict_address := 0.U
-  io.to_rs_for_jalr := 0.U
+  io.instruction.bits.for_jalr := 0.U
 
   when (op === "b01100".U) { // R
     io.instruction.bits.funct := raw_instruction(30) ## raw_instruction(14, 12)
@@ -54,7 +52,7 @@ class IF extends Module {
     io.instruction.bits.immediate := raw_instruction(31, 20).asSInt.pad(32).asUInt
   } .elsewhen (op === "b11001".U) { // jalr
     io.instruction.bits.immediate := pc + 4.U
-    io.to_rs_for_jalr := raw_instruction(31, 20).asSInt.pad(32).asUInt
+    io.instruction.bits.for_jalr := raw_instruction(31, 20).asSInt.pad(32).asUInt
   } .elsewhen (op === "b01000".U) { // S
     io.instruction.bits.funct := raw_instruction(14, 12)
     io.instruction.bits.immediate := (raw_instruction(31, 25) ## raw_instruction(11, 7)).asSInt.pad(32).asUInt
@@ -74,17 +72,23 @@ class IF extends Module {
     pc := io.modified_pc.bits
     io.quest := io.modified_pc.bits
     io.instruction.valid := false.B
-  } .elsewhen ((io.quest_result.valid || io.quest_result2.valid) && io.instruction.ready) {
+  } .elsewhen (io.quest_result.valid || io.quest_result2.valid) {
+    io.instruction.valid := true.B
+
     val new_pc = Wire(UInt(32.W))
-    new_pc := pc + 4.U
-    when (op === "b11001".U) {
-      new_pc := (raw_instruction(31) ## raw_instruction(19, 12) ## raw_instruction(20)
-        ## raw_instruction(30, 21) ## 0.U(1.W)).asSInt.pad(32).asUInt
+    when (io.instruction.fire) {
+      new_pc := pc + 4.U
+      when (op === "b11001".U) {
+        new_pc := (raw_instruction(31) ## raw_instruction(19, 12) ## raw_instruction(20)
+          ## raw_instruction(30, 21) ## 0.U(1.W)).asSInt.pad(32).asUInt
+      }
+    } .otherwise {
+      new_pc := pc
     }
+
     pc := new_pc
     io.quest := new_pc
     io.instruction.bits.predict_address := new_pc(31, 2)
-    io.instruction.valid := true.B
   } .otherwise {
     io.quest := pc
     io.instruction.valid := false.B

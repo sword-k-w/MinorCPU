@@ -26,8 +26,6 @@ class RS extends Module {
 
     val new_instruction = Flipped(Valid(new Instruction))
 
-    val for_jalr = Input(UInt(12.W))
-
     val rob_tail = Input(UInt(5.W))
 
     // remember delay a cycle in ALU
@@ -80,135 +78,135 @@ class RS extends Module {
         io.qry1_addr := io.new_instruction.bits.rs1
         io.qry1_index := io.qry1_dependence
         when (io.new_instruction.bits.rs1 === 0.U || !io.qry1_has_dependence) {
-          new_entry(i.U).valid1 := true.B
-          new_entry(i.U).value1 := io.qry1_val
-          new_entry(i.U).depend1 := 0.U
+          new_entry(i).valid1 := true.B
+          new_entry(i).value1 := io.qry1_val
+          new_entry(i).depend1 := 0.U
         } .elsewhen (io.qry1_ready) {
-          new_entry(i.U).valid1 := true.B
-          new_entry(i.U).value1 := io.qry1_value
-          new_entry(i.U).depend1 := 0.U
+          new_entry(i).valid1 := true.B
+          new_entry(i).value1 := io.qry1_value
+          new_entry(i).depend1 := 0.U
         } .otherwise {
-          new_entry(i.U).valid1 := false.B
-          new_entry(i.U).value1 := 0.U
-          new_entry(i.U).depend1 := io.qry1_dependence
+          new_entry(i).valid1 := false.B
+          new_entry(i).value1 := 0.U
+          new_entry(i).depend1 := io.qry1_dependence
         }
       }
       def CheckDependence2() : Unit = {
         io.qry2_addr := io.new_instruction.bits.rs2
         io.qry2_index := io.qry2_dependence
         when (io.new_instruction.bits.rs2 === 0.U || !io.qry2_has_dependence) {
-          new_entry(i.U).valid2 := true.B
-          new_entry(i.U).value2 := io.qry2_val
-          new_entry(i.U).depend2 := 0.U
+          new_entry(i).valid2 := true.B
+          new_entry(i).value2 := io.qry2_val
+          new_entry(i).depend2 := 0.U
         } .elsewhen (io.qry2_ready) {
-          new_entry(i.U).valid2 := true.B
-          new_entry(i.U).value2 := io.qry2_value
-          new_entry(i.U).depend2 := 0.U
+          new_entry(i).valid2 := true.B
+          new_entry(i).value2 := io.qry2_value
+          new_entry(i).depend2 := 0.U
         } .otherwise {
-          new_entry(i.U).valid2 := false.B
-          new_entry(i.U).value2 := 0.U
-          new_entry(i.U).depend2 := io.qry2_dependence
+          new_entry(i).valid2 := false.B
+          new_entry(i).value2 := 0.U
+          new_entry(i).depend2 := io.qry2_dependence
         }
       }
       // new instruction
       when (io.new_instruction.valid && i.U === io.rob_tail) {
-        new_entry(i.U).is_zero := io.new_instruction.bits.rd === 0.U && io.new_instruction.bits.op(0) === 1.U
-        new_entry(i.U).busy := true.B
-        new_entry(i.U).op := io.new_instruction.bits.op
-        new_entry(i.U).funct := io.new_instruction.bits.funct
+        new_entry(i).is_zero := io.new_instruction.bits.rd === 0.U && io.new_instruction.bits.op(0) === 1.U
+        new_entry(i).busy := true.B
+        new_entry(i).op := io.new_instruction.bits.op
+        new_entry(i).funct := io.new_instruction.bits.funct
         when (io.new_instruction.bits.op === "b11001".U) { // jalr
-          new_entry(i.U).immediate_s := io.new_instruction.bits.immediate
-          new_entry(i.U).valid2 := true.B
-          new_entry(i.U).value2 := io.for_jalr
-          new_entry(i.U).depend2 := 0.U
+          new_entry(i).immediate_s := io.new_instruction.bits.immediate
+          new_entry(i).valid2 := true.B
+          new_entry(i).value2 := io.new_instruction.bits.for_jalr
+          new_entry(i).depend2 := 0.U
           CheckDependence1()
         } .elsewhen (io.new_instruction.bits.op === "b11011".U || io.new_instruction.bits.op === "b00101".U
           || io.new_instruction.bits.op === "b01101".U) { // jal, auipc, lui
-          new_entry(i.U).immediate_s := 0.U
-          new_entry(i.U).valid1 := true.B
-          new_entry(i.U).value1 := io.new_instruction.bits.immediate
-          new_entry(i.U).depend1 := 0.U
-          new_entry(i.U).valid2 := true.B
-          new_entry(i.U).value2 := 0.U
-          new_entry(i.U).depend2 := 0.U
+          new_entry(i).immediate_s := 0.U
+          new_entry(i).valid1 := true.B
+          new_entry(i).value1 := io.new_instruction.bits.immediate
+          new_entry(i).depend1 := 0.U
+          new_entry(i).valid2 := true.B
+          new_entry(i).value2 := 0.U
+          new_entry(i).depend2 := 0.U
         } .elsewhen (io.new_instruction.bits.op === "b01000".U || io.new_instruction.bits.op === "b01100".U
           || io.new_instruction.bits.op === "b11000".U) { // S, R, B
-          new_entry(i.U).immediate_s := io.new_instruction.bits.immediate
+          new_entry(i).immediate_s := io.new_instruction.bits.immediate
           CheckDependence1()
           CheckDependence2()
         } .otherwise {
-          new_entry(i.U).immediate_s := 0.U
-          new_entry(i.U).valid2 := true.B
-          new_entry(i.U).value2 := io.new_instruction.bits.immediate
-          new_entry(i.U).depend2 := 0.U
+          new_entry(i).immediate_s := 0.U
+          new_entry(i).valid2 := true.B
+          new_entry(i).value2 := io.new_instruction.bits.immediate
+          new_entry(i).depend2 := 0.U
           CheckDependence1()
         }
       } .otherwise {
-        new_entry(i.U).op := entry(i.U).busy
-        new_entry(i.U).busy := entry(i.U).busy
-        new_entry(i.U).immediate_s := entry(i.U).immediate_s
-        new_entry(i.U).is_zero := entry(i.U).is_zero
+        new_entry(i).op := entry(i).busy
+        new_entry(i).busy := entry(i).busy
+        new_entry(i).immediate_s := entry(i).immediate_s
+        new_entry(i).is_zero := entry(i).is_zero
 
         // update dependence according to broadcast info
-        when (io.alu_broadcast_result.valid && entry(i.U).depend1 === io.alu_broadcast_result.bits.dest) {
-          new_entry(i.U).valid1 := true.B
-          new_entry(i.U).value1 := io.alu_broadcast_result.bits.value
-          new_entry(i.U).depend1 := 0.U
-        } .elsewhen (io.lsq_broadcast_result.valid && entry(i.U).depend1 === io.lsq_broadcast_result.bits.dest) {
-          new_entry(i.U).valid1 := true.B
-          new_entry(i.U).value1 := io.lsq_broadcast_result.bits.value
-          new_entry(i.U).depend1 := 0.U
+        when (io.alu_broadcast_result.valid && entry(i).depend1 === io.alu_broadcast_result.bits.dest) {
+          new_entry(i).valid1 := true.B
+          new_entry(i).value1 := io.alu_broadcast_result.bits.value
+          new_entry(i).depend1 := 0.U
+        } .elsewhen (io.lsq_broadcast_result.valid && entry(i).depend1 === io.lsq_broadcast_result.bits.dest) {
+          new_entry(i).valid1 := true.B
+          new_entry(i).value1 := io.lsq_broadcast_result.bits.value
+          new_entry(i).depend1 := 0.U
         } .otherwise {
-          new_entry(i.U).valid1 := entry(i.U).valid1
-          new_entry(i.U).value1 := entry(i.U).value1
-          new_entry(i.U).depend1 := entry(i.U).depend1
+          new_entry(i).valid1 := entry(i).valid1
+          new_entry(i).value1 := entry(i).value1
+          new_entry(i).depend1 := entry(i).depend1
         }
-        when (io.alu_broadcast_result.valid && entry(i.U).depend2 === io.alu_broadcast_result.bits.dest) {
-          new_entry(i.U).valid2 := true.B
-          new_entry(i.U).value2 := io.alu_broadcast_result.bits.value
-          new_entry(i.U).depend2 := 0.U
-        } .elsewhen (io.lsq_broadcast_result.valid && entry(i.U).depend2 === io.lsq_broadcast_result.bits.dest) {
-          new_entry(i.U).valid2 := true.B
-          new_entry(i.U).value2 := io.lsq_broadcast_result.bits.value
-          new_entry(i.U).depend2 := 0.U
+        when (io.alu_broadcast_result.valid && entry(i).depend2 === io.alu_broadcast_result.bits.dest) {
+          new_entry(i).valid2 := true.B
+          new_entry(i).value2 := io.alu_broadcast_result.bits.value
+          new_entry(i).depend2 := 0.U
+        } .elsewhen (io.lsq_broadcast_result.valid && entry(i).depend2 === io.lsq_broadcast_result.bits.dest) {
+          new_entry(i).valid2 := true.B
+          new_entry(i).value2 := io.lsq_broadcast_result.bits.value
+          new_entry(i).depend2 := 0.U
         } .otherwise {
-          new_entry(i.U).valid2 := entry(i.U).valid2
-          new_entry(i.U).value2 := entry(i.U).value2
-          new_entry(i.U).depend2 := entry(i.U).depend2
+          new_entry(i).valid2 := entry(i).valid2
+          new_entry(i).value2 := entry(i).value2
+          new_entry(i).depend2 := entry(i).depend2
         }
       }
     }
     for (i <- 0 until 16) {
-      merge_entry(i.U) :=
-        Mux(new_entry((2 * i).U).busy && new_entry((2 * i + 1).U).valid1 && new_entry((2 * i + 1).U).valid2,
-          new_entry((2 * i).U), new_entry((2 * i + 1).U))
-      merge_index(i.U) :=
-        Mux(new_entry((2 * i).U).busy && new_entry((2 * i + 1).U).valid1 && new_entry((2 * i + 1).U).valid2,
+      merge_entry(i) :=
+        Mux(new_entry(2 * i).busy && new_entry(2 * i + 1).valid1 && new_entry(2 * i + 1).valid2,
+          new_entry(2 * i), new_entry(2 * i + 1))
+      merge_index(i) :=
+        Mux(new_entry(2 * i).busy && new_entry(2 * i + 1).valid1 && new_entry(2 * i + 1).valid2,
           (2 * i).U, (2 * i + 1).U)
     }
     for (i <- 0 until 8) {
-      merge_entry((i + 16).U) :=
-        Mux(merge_entry((2 * i).U).busy && merge_entry((2 * i + 1).U).valid1 && merge_entry((2 * i + 1).U).valid2,
-          merge_entry((2 * i).U), merge_entry((2 * i + 1).U))
+      merge_entry(i + 16) :=
+        Mux(merge_entry(2 * i).busy && merge_entry(2 * i + 1).valid1 && merge_entry(2 * i + 1).valid2,
+          merge_entry(2 * i), merge_entry(2 * i + 1))
       merge_index((i + 16).U) :=
-        Mux(merge_entry((2 * i).U).busy && merge_entry((2 * i + 1).U).valid1 && merge_entry((2 * i + 1).U).valid2,
-          merge_index((2 * i).U), merge_index((2 * i + 1).U))
+        Mux(merge_entry(2 * i).busy && merge_entry(2 * i + 1).valid1 && merge_entry(2 * i + 1).valid2,
+          merge_index(2 * i), merge_index(2 * i + 1))
     }
     for (i <- 0 until 4) {
-      merge_entry((i + 24).U) :=
-        Mux(merge_entry((2 * i).U).busy && merge_entry((2 * i + 1).U).valid1 && merge_entry((2 * i + 1).U).valid2,
-          merge_entry((2 * i).U), merge_entry((2 * i + 1).U))
+      merge_entry(i + 24) :=
+        Mux(merge_entry(2 * i).busy && merge_entry(2 * i + 1).valid1 && merge_entry(2 * i + 1).valid2,
+          merge_entry(2 * i), merge_entry(2 * i + 1))
       merge_index((i + 24).U) :=
-        Mux(merge_entry((2 * i).U).busy && merge_entry((2 * i + 1).U).valid1 && merge_entry((2 * i + 1).U).valid2,
-          merge_index((2 * i).U), merge_index((2 * i + 1).U))
+        Mux(merge_entry(2 * i).busy && merge_entry(2 * i + 1).valid1 && merge_entry(2 * i + 1).valid2,
+          merge_index(2 * i), merge_index(2 * i + 1))
     }
     for (i <- 0 until 2) {
-      merge_entry((i + 28).U) :=
-        Mux(merge_entry((2 * i).U).busy && merge_entry((2 * i + 1).U).valid1 && merge_entry((2 * i + 1).U).valid2,
-          merge_entry((2 * i).U), merge_entry((2 * i + 1).U))
+      merge_entry(i + 28) :=
+        Mux(merge_entry(2 * i).busy && merge_entry(2 * i + 1).valid1 && merge_entry(2 * i + 1).valid2,
+          merge_entry(2 * i), merge_entry(2 * i + 1))
       merge_index((i + 28).U) :=
-        Mux(merge_entry((2 * i).U).busy && merge_entry((2 * i + 1).U).valid1 && merge_entry((2 * i + 1).U).valid2,
-          merge_index((2 * i).U), merge_index((2 * i + 1).U))
+        Mux(merge_entry(2 * i).busy && merge_entry(2 * i + 1).valid1 && merge_entry(2 * i + 1).valid2,
+          merge_index(2 * i), merge_index(2 * i + 1))
     }
     merge_entry(30.U) := Mux(merge_entry(28.U).busy && merge_entry(28.U).valid1 && merge_entry(28.U).valid2,
       merge_entry(28.U), merge_entry(29.U))
@@ -233,11 +231,12 @@ class RS extends Module {
     }
 
     for (i <- 0 until 32) {
-      entry(i.U) := new_entry(i.U)
+      entry(i) := new_entry(i)
       when (merge_index(30.U) === i.U && merge_entry(30.U).valid1 && merge_entry(30.U).valid2) {
-        entry(i.U).busy := false.B
+        entry(i).busy := false.B
       }
     }
   }
-  io.alu_quest := alu_quest
+  io.alu_quest.bits := alu_quest
+  io.alu_quest.valid := alu_quest_valid
 }

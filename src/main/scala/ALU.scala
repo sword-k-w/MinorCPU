@@ -75,7 +75,7 @@ class ALU extends Module {
           broadcast_to_rs.value := Mux(io.quest.bits.is_zero && io.quest.bits.op(1) === 1.U, 0.U, res)
         }
       }
-      broadcast_to_rob := true.B
+      broadcast_to_rob_valid := true.B
       broadcast_to_rob.dest := io.quest.bits.dest
       broadcast_to_rob.addr := res
       when (io.quest.bits.op =/= "b01000".U && io.quest.bits.op =/= "b11001".U) {

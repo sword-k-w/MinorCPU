@@ -23,8 +23,6 @@ class RoBEntry extends Bundle {
 // Reorder Buffer
 class RoB extends Module {
   val io = IO(new Bundle {
-    val predict_failed = Output(Bool())
-
     val wb_is_full = Input(Bool())
 
     val new_instruction = Flipped(Decoupled(new Instruction))
@@ -114,7 +112,6 @@ class RoB extends Module {
       when (new_entry(head).instruction.op === "b11000".U || new_entry(head).instruction.op === "b11001".U) { // branch or jalr
         when (new_entry(head).instruction.predict_address =/= new_entry(head).value(31, 2)) {
           predict_failed := true.B
-          io.predict_failed := true.B
           io.modified_pc.valid := true.B
           io.modified_pc.bits := new_entry(head).value
           new_head := head + 1.U
