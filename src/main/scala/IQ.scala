@@ -23,6 +23,9 @@ class IQ extends Module {
     val instruction_to_rs = Valid(new Instruction)
 
     val instruction_to_lsq = Decoupled(new Instruction)
+
+    val new_dependence_valid = Output(Bool())
+    val new_reg_id = Output(UInt(5.W))
   })
 
   val head = RegInit(0.U(5.W))
@@ -35,6 +38,9 @@ class IQ extends Module {
 
   val issue_instruction = Reg(new Instruction)
   val issue_instruction_valid = Reg(Bool())
+
+  val new_dependece_valid = RegInit(false.B)
+  val new_reg_id = RegInit(0.U(5.W))
 
   issue_instruction_valid := false.B
 
@@ -51,6 +57,8 @@ class IQ extends Module {
     when (head =/= new_tail && io.instruction_to_rob.ready && io.instruction_to_lsq.ready) {
       issue_instruction_valid := true.B
       issue_instruction := new_entry(head)
+      new_reg_id := new_entry(head).rd
+      new_dependece_valid := new_entry(head).op =/= "b01000".U && new_entry(head).op =/= "b11000".U
       new_head := head + 1.U
     } .otherwise {
       new_head := head
@@ -69,6 +77,8 @@ class IQ extends Module {
   io.instruction_to_rs.bits := issue_instruction
   io.instruction_to_lsq.valid := issue_instruction_valid
   io.instruction_to_lsq.bits := issue_instruction
+  io.new_dependence_valid := new_dependece_valid
+  io.new_reg_id := new_reg_id
 
   head := new_head
   tail := new_tail
