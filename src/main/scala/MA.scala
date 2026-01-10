@@ -10,27 +10,47 @@ class MA extends Module {
     val i_quest  = Flipped(Valid(UInt(32.W)))
     val i_result = Valid(UInt(32.W))
 
-    // TODO : info from Data Cache / Data Memory Quest
+    // info from LSQ
+    val d_quest_from_lsq = Flipped(Valid(new MemoryQuest))
+    val d_result_to_lsq = Valid(UInt(32.W))
 
+    // info from WB
+    val d_quest_from_wb = Flipped(Valid(new MemoryQuest))
+    val d_result_to_wb = Valid(UInt(32.W))
 
-    val mem_din  = Input(UInt(8.W))
-    val mem_dout = Output(UInt(8.W))
-    val mem_a    = Output(UInt(32.W))
-    val mem_wr   = Output(Bool())
+    // TODO : info from Data Cache
+
+    val mem_din  = Input(UInt(8.W))   // 1-byte dara we asked for
+    val mem_dout = Output(UInt(8.W))  // 1-byte data to write
+    val mem_a    = Output(UInt(32.W)) // we hope to read data from / write data to here
+    val mem_wr   = Output(Bool())     // write enable
   })
 
-  val state = RegInit(false.B) // Arbiter state : false is idle, true is reading from memory
-  val just_finished = RegInit(false.B) // whether just finished reading 4 bytes
-  val index = RegInit(0.U(32.W))
-  
-  val tmp_array = RegInit(VecInit(Seq.fill(4)(0.U(8.W))))
-  
+  val state = RegInit(0.U(2.W)) // Arbiter state : 0 -> idle, 1 -> reading instruction for ICache,
+                                //                 2 -> reading data for LSQ, 3 -> writing data for WB
+  val just_finished_i = RegInit(false.B) // whether just finished reading 4 bytes of instruction for ICache
+  val just_finished_d = RegInit(false.B) // whether just finished reading 4 bytes of data for LSQ
+  val index = RegInit(0.U(32.W))         // a register that keeps memory address
+
+  val tmp_array = RegInit(VecInit(Seq.fill(4)(0.U(8.W)))) // place the data together
+
+  // output to ICache
   io.i_result.bits := 0.U
   io.i_result.valid := false.B
+  just_finished_i := false.B
+
+  // output to LSQ
+  io.d_result_to_lsq.bits := 0.U
+  io.d_result_to_lsq.valid := false.B
+  just_finished_d := false.B
+
+  // output to WB
+  io.d_result_to_wb.bits := 0.U
+  io.d_result_to_wb.valid := false.B
+
   io.mem_dout := 0.U
   io.mem_a := 0.U
   io.mem_wr := false.B
-  just_finished := false.B
   
   // printf("(MA) : state = %d\n", state)
   // printf("     : index = %d\n", index)
@@ -43,27 +63,73 @@ class MA extends Module {
   // printf("     : io.i_result = %d\n", tmp_array(0) ## tmp_array(1) ## tmp_array(2) ## io.mem_din)
 
   when (io.predict_failed) {
-    state := false.B
+    state := 0.U(2.W)
   } .otherwise {
-    when (state) {
-      val next_index = index + 1.U
-      tmp_array(index(1, 0) & 3.U) := io.mem_din
-      io.mem_a := next_index
-      index := next_index
-      when ((next_index(1, 0) & 3.U) === 3.U) {
-        state := false.B
-        just_finished := true.B
+    switch (state) {
+      is (0.U) { // idle
+        when (io.d_quest_from_lsq.valid) {
+          state := 2.U(2.W)
+          io.mem_a := io.d_quest_from_lsq.bits.addr
+          index := io.d_quest_from_lsq.bits.addr
+        } .elsewhen(io.d_quest_from_wb.valid) {
+          state := 3.U(2.W)
+          tmp_array(0) := io.d_quest_from_wb.bits.value(7, 0)
+          tmp_array(1) := io.d_quest_from_wb.bits.value(15, 8)
+          tmp_array(2) := io.d_quest_from_wb.bits.value(23, 16)
+          tmp_array(3) := io.d_quest_from_wb.bits.value(31, 24)
+          io.mem_wr := true.B
+          io.mem_a := io.d_quest_from_wb.bits.addr
+          index := io.d_quest_from_wb.bits.addr
+          io.mem_dout := io.d_quest_from_wb.bits.value(7, 0)
+        } .elsewhen(io.i_quest.valid) {
+          state := 1.U(2.W)
+          io.mem_a := io.i_quest.bits
+          index := io.i_quest.bits
+        }
+
+        when (just_finished_i) {
+          io.i_result.bits := tmp_array(0) ## tmp_array(1) ## tmp_array(2) ## io.mem_din
+          io.i_result.valid := true.B
+        } .elsewhen(just_finished_d) {
+          io.d_result_to_lsq.bits := tmp_array(0) ## tmp_array(1) ## tmp_array(2) ## io.mem_din
+          io.d_result_to_lsq.valid := true.B
+        }
       }
-    } .otherwise {
-      when (io.i_quest.valid) {
-        state := true.B
-        io.mem_a := io.i_quest.bits
-        index := io.i_quest.bits
+
+      is (1.U) { // reading instruction for ICache
+        val next_index = index + 1.U
+        tmp_array(index(1, 0) & 3.U) := io.mem_din
+        io.mem_a := next_index
+        index := next_index
+        when ((next_index(1, 0) & 3.U) === 3.U) {
+          state := 0.U
+          just_finished_i := true.B
+        }
       }
-    }
-    when (just_finished) {
-      io.i_result.bits := tmp_array(0) ## tmp_array(1) ## tmp_array(2) ## io.mem_din
-      io.i_result.valid := true.B
+
+      is (2.U) { // reading data for LSQ
+        val next_index = index + 1.U
+        tmp_array(index(1, 0) & 3.U) := io.mem_din
+        io.mem_a := next_index
+        index := next_index
+        when ((next_index(1, 0) & 3.U) === 3.U) {
+          state := 0.U
+          just_finished_d := true.B
+        }
+      }
+
+      is (3.U) { // writing data for WB
+        val next_index = index + 1.U
+        io.mem_wr := true.B
+        io.mem_a := next_index
+        index := next_index
+        io.mem_dout := tmp_array(next_index(1, 0) & 3.U)
+        when ((next_index(1, 0) & 3.U) === 3.U) {
+          state := 0.U
+          io.d_result_to_wb.valid := true.B
+        }
+      }
+
     }
   }
 }
