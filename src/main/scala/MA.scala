@@ -63,7 +63,7 @@ class MA extends Module {
   // printf("     : tmp_array(2) = %d\n", tmp_array(2))
   // printf("     : tmp_array(3) = %d\n", tmp_array(3))
   // printf("     : io.mem_din = %d\n", io.mem_din)
-  // printf("     : io.i_result = %d\n", tmp_array(0) ## tmp_array(1) ## tmp_array(2) ## io.mem_din)
+  // printf("     : io.i_result = %d\n", io.mem_din ## tmp_array(2) ## tmp_array(1) ## tmp_array(0))
 
   val lsq_max_index = Wire(UInt(2.W))
   lsq_max_index := 0.U
@@ -91,20 +91,20 @@ class MA extends Module {
     switch (state) {
       is (0.U) { // idle
         when (just_finished_i) {
-          io.i_result.bits := tmp_array(0) ## tmp_array(1) ## tmp_array(2) ## io.mem_din
+          io.i_result.bits := io.mem_din ## tmp_array(2) ## tmp_array(1) ## tmp_array(0)
           io.i_result.valid := true.B
         } .elsewhen(just_finished_d_lsq) {
           switch (lsq_max_index) {
             is (0.U) { io.d_result_to_lsq.bits := io.mem_din }
-            is (1.U) { io.d_result_to_lsq.bits := tmp_array(0) ## io.mem_din }
-            is (3.U) { io.d_result_to_lsq.bits := tmp_array(0) ## tmp_array(1) ## tmp_array(2) ## io.mem_din }
+            is (1.U) { io.d_result_to_lsq.bits := io.mem_din ## tmp_array(0) }
+            is (3.U) { io.d_result_to_lsq.bits := io.mem_din ## tmp_array(2) ## tmp_array(1) ## tmp_array(0) }
           }
           io.d_result_to_lsq.valid := true.B
         } .elsewhen(just_finished_d_wb) {
           switch (wb_max_index) {
             is (0.U) { io.d_result_to_wb.bits := io.mem_din }
-            is (1.U) { io.d_result_to_wb.bits := tmp_array(0) ## io.mem_din }
-            is (3.U) { io.d_result_to_wb.bits := tmp_array(0) ## tmp_array(1) ## tmp_array(2) ## io.mem_din }
+            is (1.U) { io.d_result_to_wb.bits := io.mem_din ## tmp_array(0) }
+            is (3.U) { io.d_result_to_wb.bits := io.mem_din ## tmp_array(2) ## tmp_array(1) ## tmp_array(0) }
           }
           io.d_result_to_wb.valid := true.B
         }
