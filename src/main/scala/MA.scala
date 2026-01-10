@@ -26,12 +26,14 @@ class MA extends Module {
     val mem_wr   = Output(Bool())     // write enable
   })
 
-  val state = RegInit(0.U(2.W)) // Arbiter state : 0 -> idle, 1 -> reading instruction for ICache,
-                                //                 2 -> reading data for LSQ, 3 -> writing data for WB
-  val just_finished_i = RegInit(false.B) // whether just finished reading 4 bytes of instruction for ICache
-  val just_finished_d = RegInit(false.B) // whether just finished reading 4 bytes of data for LSQ
-  val index = RegInit(0.U(32.W))         // a register that keeps memory address
+  val state = RegInit(0.U(3.W)) // Arbiter state : 0 -> idle, 1 -> reading instruction for ICache,
+                                //                 2 -> reading data for LSQ, 3 -> writing data for WB,
+                                //                 4 -> reading data for WB
+  val just_finished_i = RegInit(false.B)     // whether just finished reading 4 bytes of instruction for ICache
+  val just_finished_d_lsq = RegInit(false.B) // whether just finished reading 4 bytes of data for LSQ
+  val just_finished_d_wb = RegInit(false.B)  // whether just finished reading 4 bytes of data for WB
 
+  val index = RegInit(0.U(32.W))             // a register that keeps memory address
   val tmp_array = RegInit(VecInit(Seq.fill(4)(0.U(8.W)))) // place the data together
 
   // output to ICache
@@ -42,11 +44,12 @@ class MA extends Module {
   // output to LSQ
   io.d_result_to_lsq.bits := 0.U
   io.d_result_to_lsq.valid := false.B
-  just_finished_d := false.B
+  just_finished_d_lsq := false.B
 
   // output to WB
   io.d_result_to_wb.bits := 0.U
   io.d_result_to_wb.valid := false.B
+  just_finished_d_wb := false.B
 
   io.mem_dout := 0.U
   io.mem_a := 0.U
@@ -62,37 +65,76 @@ class MA extends Module {
   // printf("     : io.mem_din = %d\n", io.mem_din)
   // printf("     : io.i_result = %d\n", tmp_array(0) ## tmp_array(1) ## tmp_array(2) ## io.mem_din)
 
+  val lsq_max_index = 0.U(2.W)
+  when (io.d_quest_from_lsq.valid) {
+    switch (io.d_quest_from_lsq.bits.size) {
+      is (0.U) { lsq_max_index := 0.U }
+      is (1.U) { lsq_max_index := 1.U }
+      is (2.U) { lsq_max_index := 3.U }
+    }
+  }
+
+  val wb_max_index = 0.U(2.W)
+  when (io.d_quest_from_wb.valid) {
+    switch (io.d_quest_from_wb.bits.size) {
+      is (0.U) { wb_max_index := 0.U }
+      is (1.U) { wb_max_index := 1.U }
+      is (2.U) { wb_max_index := 3.U }
+    }
+  }
+
   when (io.predict_failed) {
-    state := 0.U(2.W)
+    state := 0.U(3.W)
   } .otherwise {
     switch (state) {
       is (0.U) { // idle
-        when (io.d_quest_from_lsq.valid) {
-          state := 2.U(2.W)
-          io.mem_a := io.d_quest_from_lsq.bits.addr
-          index := io.d_quest_from_lsq.bits.addr
-        } .elsewhen(io.d_quest_from_wb.valid) {
-          state := 3.U(2.W)
-          tmp_array(0) := io.d_quest_from_wb.bits.value(7, 0)
-          tmp_array(1) := io.d_quest_from_wb.bits.value(15, 8)
-          tmp_array(2) := io.d_quest_from_wb.bits.value(23, 16)
-          tmp_array(3) := io.d_quest_from_wb.bits.value(31, 24)
-          io.mem_wr := true.B
-          io.mem_a := io.d_quest_from_wb.bits.addr
-          index := io.d_quest_from_wb.bits.addr
-          io.mem_dout := io.d_quest_from_wb.bits.value(7, 0)
-        } .elsewhen(io.i_quest.valid) {
-          state := 1.U(2.W)
-          io.mem_a := io.i_quest.bits
-          index := io.i_quest.bits
-        }
-
         when (just_finished_i) {
           io.i_result.bits := tmp_array(0) ## tmp_array(1) ## tmp_array(2) ## io.mem_din
           io.i_result.valid := true.B
-        } .elsewhen(just_finished_d) {
-          io.d_result_to_lsq.bits := tmp_array(0) ## tmp_array(1) ## tmp_array(2) ## io.mem_din
+        } .elsewhen(just_finished_d_lsq) {
+          switch (lsq_max_index) {
+            is (0.U) { io.d_result_to_lsq.bits := io.mem_din }
+            is (1.U) { io.d_result_to_lsq.bits := tmp_array(0) ## io.mem_din }
+            is (3.U) { io.d_result_to_lsq.bits := tmp_array(0) ## tmp_array(1) ## tmp_array(2) ## io.mem_din }
+          }
           io.d_result_to_lsq.valid := true.B
+        } .elsewhen(just_finished_d_wb) {
+          switch (wb_max_index) {
+            is (0.U) { io.d_result_to_wb.bits := io.mem_din }
+            is (1.U) { io.d_result_to_wb.bits := tmp_array(0) ## io.mem_din }
+            is (3.U) { io.d_result_to_wb.bits := tmp_array(0) ## tmp_array(1) ## tmp_array(2) ## io.mem_din }
+          }
+          io.d_result_to_wb.valid := true.B
+        }
+
+        when(io.d_quest_from_wb.valid) {
+          when (io.d_quest_from_wb.bits.wr_en) { // write
+            state := 3.U(3.W)
+            tmp_array(0) := io.d_quest_from_wb.bits.value(7, 0)
+            tmp_array(1) := io.d_quest_from_wb.bits.value(15, 8)
+            tmp_array(2) := io.d_quest_from_wb.bits.value(23, 16)
+            tmp_array(3) := io.d_quest_from_wb.bits.value(31, 24)
+            io.mem_wr := true.B
+            io.mem_a := io.d_quest_from_wb.bits.addr
+            index := io.d_quest_from_wb.bits.addr
+            io.mem_dout := io.d_quest_from_wb.bits.value(7, 0)
+            when (wb_max_index === 0.U) {
+              state := 0.U(3.W)
+              io.d_result_to_wb.valid := true.B
+            }
+          } .otherwise { // read
+            state := 4.U(3.W)
+            io.mem_a := io.d_quest_from_wb.bits.addr
+            index := io.d_quest_from_wb.bits.addr
+          }
+        } .elsewhen (io.d_quest_from_lsq.valid) {
+          state := 2.U(3.W)
+          io.mem_a := io.d_quest_from_lsq.bits.addr
+          index := io.d_quest_from_lsq.bits.addr
+        } .elsewhen(io.i_quest.valid) {
+          state := 1.U(3.W)
+          io.mem_a := io.i_quest.bits
+          index := io.i_quest.bits
         }
       }
 
@@ -112,9 +154,9 @@ class MA extends Module {
         tmp_array(index(1, 0) & 3.U) := io.mem_din
         io.mem_a := next_index
         index := next_index
-        when ((next_index(1, 0) & 3.U) === 3.U) {
+        when ((next_index(1, 0) & 3.U) === lsq_max_index) {
           state := 0.U
-          just_finished_d := true.B
+          just_finished_d_lsq := true.B
         }
       }
 
@@ -124,9 +166,20 @@ class MA extends Module {
         io.mem_a := next_index
         index := next_index
         io.mem_dout := tmp_array(next_index(1, 0) & 3.U)
-        when ((next_index(1, 0) & 3.U) === 3.U) {
+        when ((next_index(1, 0) & 3.U) === wb_max_index) {
           state := 0.U
           io.d_result_to_wb.valid := true.B
+        }
+      }
+
+      is (4.U) { // reading data for WB
+        val next_index = index + 1.U
+        tmp_array(index(1, 0) & 3.U) := io.mem_din
+        io.mem_a := next_index
+        index := next_index
+        when ((next_index(1, 0) & 3.U) === wb_max_index) {
+          state := 0.U
+          just_finished_d_wb := true.B
         }
       }
 
