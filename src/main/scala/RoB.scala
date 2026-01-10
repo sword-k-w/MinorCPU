@@ -5,6 +5,7 @@ class ALUToRoBResult extends Bundle {
   val dest = UInt(5.W)
   val value = UInt(32.W)
   val addr = UInt(32.W)
+  val mmio = Bool()
 }
 
 class LSQToRoBResult extends Bundle {
@@ -17,6 +18,7 @@ class RoBEntry extends Bundle {
   val instruction = new Instruction
   val value = UInt(32.W)
   val addr = UInt(32.W)
+  val mmio_ready = Bool()
   // TODO : other info
 }
 
@@ -32,6 +34,8 @@ class RoB extends Module {
 
     // remember delay a cycle in LSQ
     val lsq_broadcast_result = Flipped(Valid(new LSQToRoBResult))
+
+    val wb_broadcast_result = Flipped(Valid(new LSQToRoBResult))
 
     val broadcast_to_lsq = Valid(new RoBBroadcastResult)
 
@@ -49,6 +53,9 @@ class RoB extends Module {
 
     val rob_tail = Output(UInt(5.W))
   })
+
+  io.modified_pc.valid := false.B
+  io.modified_pc.bits := 0.U
 
   val entry = Reg(Vec(32, new RoBEntry))
   val head = RegInit(0.U(5.W))
@@ -91,11 +98,15 @@ class RoB extends Module {
   } .otherwise {
     for (i <- 0 until 32) {
       when (i.U === io.alu_broadcast_result.bits.dest && io.alu_broadcast_result.valid) {
-        new_entry(i.U).ready := true.B
+        new_entry(i.U).ready := true.B // pretend to commit if mmio
         new_entry(i.U).value := io.alu_broadcast_result.bits.value
         new_entry(i.U).addr := io.alu_broadcast_result.bits.addr
+        new_entry(i.U).instruction.mmio := io.alu_broadcast_result.bits.mmio
       } .elsewhen (i.U === io.lsq_broadcast_result.bits.dest && io.lsq_broadcast_result.valid) {
         new_entry(i.U).ready := true.B
+        new_entry(i.U).value := io.lsq_broadcast_result.bits.value
+      } .elsewhen (i.U === io.wb_broadcast_result.bits.dest && io.wb_broadcast_result.valid) {
+        new_entry(i.U).mmio_ready := true.B // real commit
         new_entry(i.U).value := io.lsq_broadcast_result.bits.value
       } .elsewhen (i.U === tail && io.new_instruction.valid) {
         new_entry(i.U).instruction := io.new_instruction.bits
@@ -104,33 +115,46 @@ class RoB extends Module {
       }
     }
 
+    val frozen = RegInit(false.B) // for mmio
     // commit.
     // because the update of entry has one cycle latency, add special judge for commit condition
-    when (head =/= new_tail && (new_entry(head).ready
-      || (io.alu_broadcast_result.valid && io.alu_broadcast_result.bits.dest === head)
-      || (io.lsq_broadcast_result.valid && io.lsq_broadcast_result.bits.dest === head))) {
-      when (new_entry(head).instruction.op === "b11000".U || new_entry(head).instruction.op === "b11001".U) { // branch or jalr
-        when (new_entry(head).instruction.predict_address =/= new_entry(head).value(31, 2)) {
-          predict_failed := true.B
-          io.modified_pc.valid := true.B
-          io.modified_pc.bits := new_entry(head).value
-          new_head := head + 1.U
-          // maybe something else need to do?
-        }
-      } .elsewhen(new_entry(head).instruction.op === "b01000".U) { // S
-        when (!io.wb_is_full) {
-          broadcast_to_lsq_valid := true.B
-          broadcast_to_lsq.addr := new_entry(head).addr
-          broadcast_to_lsq.value := new_entry(head).value
-          broadcast_to_lsq.dest := head
-          new_head := head + 1.U
-        }
-      } .otherwise {
+    when (head =/= new_tail) {
+      when (new_entry(head).mmio_ready) {
+        frozen := false.B
         commit_to_rf_valid := true.B
         commit_to_rf.rob_id := head
         commit_to_rf.reg_id := new_entry(head).instruction.rd
         commit_to_rf.value := new_entry(head).value
         new_head := head + 1.U
+      } .elsewhen (new_entry(head).ready) {
+        when (new_entry(head).instruction.op === "b11000".U || new_entry(head).instruction.op === "b11001".U) { // branch or jalr
+          when (new_entry(head).instruction.predict_address =/= new_entry(head).value(31, 2)) {
+            predict_failed := true.B
+            io.modified_pc.valid := true.B
+            io.modified_pc.bits := new_entry(head).value
+            new_head := head + 1.U
+            // maybe something else need to do?
+            // frozen := false.B (I don't think this is needed)
+          }
+        } .elsewhen(new_entry(head).instruction.op === "b01000".U || new_entry(head).instruction.mmio) { // S
+          when (!io.wb_is_full) {
+            broadcast_to_lsq_valid := true.B
+            broadcast_to_lsq.addr := new_entry(head).addr
+            broadcast_to_lsq.value := new_entry(head).value
+            broadcast_to_lsq.dest := head
+            when (new_entry(head).instruction.mmio) {
+              frozen := true.B // wait until mmio is finished
+            } .otherwise {
+              new_head := head + 1.U
+            }
+          }
+        } .otherwise {
+          commit_to_rf_valid := true.B
+          commit_to_rf.rob_id := head
+          commit_to_rf.reg_id := new_entry(head).instruction.rd
+          commit_to_rf.value := new_entry(head).value
+          new_head := head + 1.U
+        }
       }
     }
   }

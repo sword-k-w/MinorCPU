@@ -34,6 +34,8 @@ class RS extends Module {
     // remember delay a cycle in LSQ
     val lsq_broadcast_result = Flipped(Valid(new ToRSResult))
 
+    val wb_broadcast_result = Flipped(Valid(new ToRSResult))
+
     val alu_quest = Valid(new ALUQuest)
 
     // query RF
@@ -57,10 +59,20 @@ class RS extends Module {
     val qry2_value = Input(UInt(32.W))
   })
 
+  io.alu_quest.valid := false.B
+  io.alu_quest.bits.in1 := 0.U
+  io.alu_quest.bits.in2 := 0.U
+  io.alu_quest.bits.in3 := 0.U
+  io.alu_quest.bits.is_zero := false.B
+  io.alu_quest.bits.dest := 0.U
+  io.alu_quest.bits.funct := 0.U
+  io.alu_quest.bits.op := 0.U
+  io.qry1_addr := 0.U
+  io.qry2_addr := 0.U
+  io.qry1_index := 0.U
+  io.qry2_index := 0.U
+
   val entry = Reg(Vec(32, new RSEntry))
-  val new_entry = Wire(Vec(32, new RSEntry))
-  val merge_entry = Wire(Vec(31, new RSEntry))
-  val merge_index = Wire(Vec(31, UInt(5.W)))
 
   val alu_quest = Reg(new ALUQuest)
   val alu_quest_valid = Reg(Bool())
@@ -73,6 +85,8 @@ class RS extends Module {
       member.busy := false.B
     }
   } .otherwise {
+    val new_entry = Wire(Vec(32, new RSEntry))
+    val merge_index = Wire(Vec(31, UInt(5.W)))
     for (i <- 0 until 32) {
       def CheckDependence1() : Unit = {
         io.qry1_addr := io.new_instruction.bits.rs1
@@ -143,6 +157,7 @@ class RS extends Module {
         }
       } .otherwise {
         new_entry(i).op := entry(i).busy
+        new_entry(i).funct := entry(i).funct
         new_entry(i).busy := entry(i).busy
         new_entry(i).immediate_s := entry(i).immediate_s
         new_entry(i).is_zero := entry(i).is_zero
@@ -155,6 +170,10 @@ class RS extends Module {
         } .elsewhen (io.lsq_broadcast_result.valid && entry(i).depend1 === io.lsq_broadcast_result.bits.dest) {
           new_entry(i).valid1 := true.B
           new_entry(i).value1 := io.lsq_broadcast_result.bits.value
+          new_entry(i).depend1 := 0.U
+        } .elsewhen (io.wb_broadcast_result.valid && entry(i).depend1 === io.wb_broadcast_result.bits.dest) {
+          new_entry(i).valid1 := true.B
+          new_entry(i).value1 := io.wb_broadcast_result.bits.value
           new_entry(i).depend1 := 0.U
         } .otherwise {
           new_entry(i).valid1 := entry(i).valid1
@@ -169,6 +188,10 @@ class RS extends Module {
           new_entry(i).valid2 := true.B
           new_entry(i).value2 := io.lsq_broadcast_result.bits.value
           new_entry(i).depend2 := 0.U
+        } .elsewhen (io.wb_broadcast_result.valid && entry(i).depend1 === io.wb_broadcast_result.bits.dest) {
+          new_entry(i).valid1 := true.B
+          new_entry(i).value1 := io.wb_broadcast_result.bits.value
+          new_entry(i).depend1 := 0.U
         } .otherwise {
           new_entry(i).valid2 := entry(i).valid2
           new_entry(i).value2 := entry(i).value2
@@ -177,62 +200,51 @@ class RS extends Module {
       }
     }
     for (i <- 0 until 16) {
-      merge_entry(i) :=
-        Mux(new_entry(2 * i).busy && new_entry(2 * i + 1).valid1 && new_entry(2 * i + 1).valid2,
-          new_entry(2 * i), new_entry(2 * i + 1))
       merge_index(i) :=
-        Mux(new_entry(2 * i).busy && new_entry(2 * i + 1).valid1 && new_entry(2 * i + 1).valid2,
+        Mux(new_entry(2 * i).busy && new_entry(2 * i).valid1 && new_entry(2 * i).valid2,
           (2 * i).U, (2 * i + 1).U)
     }
     for (i <- 0 until 8) {
-      merge_entry(i + 16) :=
-        Mux(merge_entry(2 * i).busy && merge_entry(2 * i + 1).valid1 && merge_entry(2 * i + 1).valid2,
-          merge_entry(2 * i), merge_entry(2 * i + 1))
+      val index = merge_index(2 * i)
       merge_index((i + 16).U) :=
-        Mux(merge_entry(2 * i).busy && merge_entry(2 * i + 1).valid1 && merge_entry(2 * i + 1).valid2,
-          merge_index(2 * i), merge_index(2 * i + 1))
+        Mux(new_entry(index).busy && new_entry(index).valid1 && new_entry(index).valid2, index, merge_index(2 * i + 1))
     }
     for (i <- 0 until 4) {
-      merge_entry(i + 24) :=
-        Mux(merge_entry(2 * i).busy && merge_entry(2 * i + 1).valid1 && merge_entry(2 * i + 1).valid2,
-          merge_entry(2 * i), merge_entry(2 * i + 1))
+      val index = merge_index(2 * i + 16)
       merge_index((i + 24).U) :=
-        Mux(merge_entry(2 * i).busy && merge_entry(2 * i + 1).valid1 && merge_entry(2 * i + 1).valid2,
-          merge_index(2 * i), merge_index(2 * i + 1))
+        Mux(new_entry(index).busy && new_entry(index).valid1 && new_entry(index).valid2, index, merge_index(2 * i + 17))
     }
     for (i <- 0 until 2) {
-      merge_entry(i + 28) :=
-        Mux(merge_entry(2 * i).busy && merge_entry(2 * i + 1).valid1 && merge_entry(2 * i + 1).valid2,
-          merge_entry(2 * i), merge_entry(2 * i + 1))
+      val index = merge_index(2 * i + 24)
       merge_index((i + 28).U) :=
-        Mux(merge_entry(2 * i).busy && merge_entry(2 * i + 1).valid1 && merge_entry(2 * i + 1).valid2,
-          merge_index(2 * i), merge_index(2 * i + 1))
+        Mux(new_entry(index).busy && new_entry(index).valid1 && new_entry(index).valid2, index, merge_index(2 * i + 25))
     }
-    merge_entry(30.U) := Mux(merge_entry(28.U).busy && merge_entry(28.U).valid1 && merge_entry(28.U).valid2,
-      merge_entry(28.U), merge_entry(29.U))
-    merge_index(30.U) := Mux(merge_entry(28.U).busy && merge_entry(28.U).valid1 && merge_entry(28.U).valid2,
-      merge_index(28.U), merge_index(29.U))
+    val tmp_index = merge_index(28)
+    merge_index(30.U) := Mux(new_entry(tmp_index).busy && new_entry(tmp_index).valid1
+      && new_entry(tmp_index).valid2, tmp_index, merge_index(29.U))
 
-    when (merge_entry(30.U).busy && merge_entry(30.U).valid1 && merge_entry(30.U).valid2) {
+    val merged_entry = new_entry(merge_index(30.U))
+
+    when (merged_entry.busy && merged_entry.valid1 && merged_entry.valid2) {
       alu_quest_valid := true.B
-      alu_quest.op := merge_entry(30.U).op
-      alu_quest.funct := merge_entry(30.U).funct
+      alu_quest.op := merged_entry.op
+      alu_quest.funct := merged_entry.funct
       alu_quest.dest := merge_index(30.U)
-      alu_quest.in1 := merge_entry(30.U).value1
-      alu_quest.is_zero := merge_entry(30.U).is_zero
+      alu_quest.in1 := merged_entry.value1
+      alu_quest.is_zero := merged_entry.is_zero
       // maybe can be reduced here
-      when (merge_entry(30.U).op === "b01000".U) { // S
-        alu_quest.in2 := merge_entry(30.U).immediate_s
-        alu_quest.in3 := merge_entry(30.U).value2
+      when (merged_entry.op === "b01000".U) { // S
+        alu_quest.in2 := merged_entry.immediate_s
+        alu_quest.in3 := merged_entry.value2
       } .otherwise {
-        alu_quest.in2 := merge_entry(30.U).value2
-        alu_quest.in3 := merge_entry(30.U).immediate_s
+        alu_quest.in2 := merged_entry.value2
+        alu_quest.in3 := merged_entry.immediate_s
       }
     }
 
     for (i <- 0 until 32) {
       entry(i) := new_entry(i)
-      when (merge_index(30.U) === i.U && merge_entry(30.U).valid1 && merge_entry(30.U).valid2) {
+      when (merge_index(30.U) === i.U && merged_entry.valid1 && merged_entry.valid2) {
         entry(i).busy := false.B
       }
     }

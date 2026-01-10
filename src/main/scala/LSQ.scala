@@ -10,6 +10,7 @@ class RoBBroadcastResult extends Bundle {
 class ALUBroadcastResult extends Bundle {
   val dest = UInt(5.W)
   val addr = UInt(32.W)
+  val mmio = Bool()
 }
 
 class MemoryQuest extends Bundle {
@@ -105,18 +106,21 @@ class LSQ extends Module {
         new_entry(i.U).address := io.rob_broadcast_result.bits.addr
         new_entry(i.U).value := io.rob_broadcast_result.bits.value
       } .elsewhen (io.alu_broadcast_result.valid && io.alu_broadcast_result.bits.dest === entry(i.U).dest) {
-        new_entry(i.U).ready := true.B
+        new_entry(i.U).ready := !io.alu_broadcast_result.bits.mmio
         new_entry(i.U).address := io.alu_broadcast_result.bits.addr
+        new_entry(i.U).instruction.mmio := io.alu_broadcast_result.bits.mmio
       }
     }
   }
   when (head =/= new_tail && new_entry(head).ready) {
-    when (new_entry(head).instruction.op === "b01000".U) { // S
+    when (new_entry(head).instruction.op === "b01000".U || new_entry(head).instruction.mmio) { // S
       when (!io.wb_is_full) {
         store_to_wb_valid := true.B
         store_to_wb.addr := new_entry(head).address
         store_to_wb.value := new_entry(head).value
         store_to_wb.size := new_entry(head).instruction.funct(1, 0)
+        store_to_wb.mmio := new_entry(head).instruction.mmio
+        store_to_wb.dest := new_entry(head).dest
         new_head := head + 1.U
       }
     } .otherwise {
