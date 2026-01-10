@@ -50,6 +50,9 @@ class RoB extends Module {
     val rob_tail = Output(UInt(5.W))
   })
 
+  io.modified_pc.valid := false.B
+  io.modified_pc.bits := 0.U
+
   val entry = Reg(Vec(32, new RoBEntry))
   val head = RegInit(0.U(5.W))
   val tail = RegInit(0.U(5.W))

@@ -2,7 +2,7 @@
 
 ## How to Get Verilog Version of Our Code
 
-The main part of our cpu is written in Chisel. To get verilog version, run `sbt "runMain CPUMain --target-dir generated"` at root directory. `CPU.v` will generated in folder `generated`.
+The main part of our cpu is written in Chisel. To get verilog version, run `sbt run` at root directory. `CPU.v` will generated in folder `generated`.
 
 **Always use big endian in README!** 
 

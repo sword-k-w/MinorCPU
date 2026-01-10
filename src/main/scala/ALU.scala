@@ -36,6 +36,7 @@ class ALU extends Module {
   broadcast_to_lsq_valid := false.B
   when (io.quest.valid && !io.predict_failed) {
     val res = Wire(UInt(5.W))
+    res := 0.U
     when (io.quest.bits.op(2) === 1.U) {
       switch (io.quest.bits.funct) {
         is ("b0_000".U) { res := io.quest.bits.in1 + io.quest.bits.in2 }
