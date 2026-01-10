@@ -65,7 +65,8 @@ class MA extends Module {
   // printf("     : io.mem_din = %d\n", io.mem_din)
   // printf("     : io.i_result = %d\n", tmp_array(0) ## tmp_array(1) ## tmp_array(2) ## io.mem_din)
 
-  val lsq_max_index = 0.U(2.W)
+  val lsq_max_index = Wire(UInt(2.W))
+  lsq_max_index := 0.U
   when (io.d_quest_from_lsq.valid) {
     switch (io.d_quest_from_lsq.bits.size) {
       is (0.U) { lsq_max_index := 0.U }
@@ -74,7 +75,8 @@ class MA extends Module {
     }
   }
 
-  val wb_max_index = 0.U(2.W)
+  val wb_max_index = Wire(UInt(2.W))
+  wb_max_index := 0.U
   when (io.d_quest_from_wb.valid) {
     switch (io.d_quest_from_wb.bits.size) {
       is (0.U) { wb_max_index := 0.U }
@@ -107,6 +109,7 @@ class MA extends Module {
           io.d_result_to_wb.valid := true.B
         }
 
+        // priority: WB/LSQ > ICache
         when(io.d_quest_from_wb.valid) {
           when (io.d_quest_from_wb.bits.wr_en) { // write
             state := 3.U(3.W)
