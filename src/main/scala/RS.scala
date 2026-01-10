@@ -26,6 +26,8 @@ class RS extends Module {
 
     val new_instruction = Flipped(Valid(new Instruction))
 
+    val for_jalr = Input(UInt(12.W))
+
     val rob_tail = Input(UInt(5.W))
 
     // remember delay a cycle in ALU
@@ -117,7 +119,7 @@ class RS extends Module {
         when (io.new_instruction.bits.op === "b11001".U) { // jalr
           new_entry(i.U).immediate_s := io.new_instruction.bits.immediate
           new_entry(i.U).valid2 := true.B
-          new_entry(i.U).value2 := io.new_instruction.bits.rs2
+          new_entry(i.U).value2 := io.for_jalr
           new_entry(i.U).depend2 := 0.U
           CheckDependence1()
         } .elsewhen (io.new_instruction.bits.op === "b11011".U || io.new_instruction.bits.op === "b00101".U

@@ -40,7 +40,7 @@ class LSQSpec extends AnyFlatSpec with ChiselScalatestTester {
     lsq.io.broadcast_to_rob <> io.broadcast_to_rob
     lsq.io.memory_quest <> io.memory_quest_from_lsq
     lsq.io.memory_result <> io.memory_result_for_lsq
-    lsq.io.is_full <> io.lsq_is_full
+    lsq.io.new_instruction.ready <> io.lsq_is_full
   }
 
   "LSQ" should "handle single load instruction" in {

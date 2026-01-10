@@ -33,7 +33,7 @@ class LSQ extends Module {
 
     val rob_tail = Input(UInt(5.W))
 
-    val new_instruction = Flipped(Valid(new Instruction))
+    val new_instruction = Flipped(Decoupled(new Instruction))
 
     // remember delay a cycle in RoB
     val rob_broadcast_result = Flipped(Valid(new RoBBroadcastResult))
@@ -53,8 +53,6 @@ class LSQ extends Module {
     val wb_is_full = Input(Bool())
 
     val store_to_wb = Valid(new AddrValue)
-
-    val is_full = Output(Bool())
   })
 
   val entry = Reg(Vec(32, new LSQEntry))
@@ -152,7 +150,7 @@ class LSQ extends Module {
   }
   head := new_head
   tail := new_tail
-  io.is_full := new_tail + 1.U === new_head
+  io.new_instruction.ready := new_tail + 1.U === new_head
   for (i <- 0 until 32) {
     entry(i.U) := new_entry(i.U)
   }

@@ -8,7 +8,7 @@ import scala.util.control.Breaks._
 class FESpec extends AnyFlatSpec with ChiselScalatestTester {
   class FE extends Module {
     val io = IO(new Bundle {
-      val instruction = Decoupled(new InstructionBundle)
+      val instruction = Decoupled(new Instruction)
       
       val modified_pc = Flipped(Valid(UInt(32.W)))
       
@@ -46,7 +46,7 @@ class FESpec extends AnyFlatSpec with ChiselScalatestTester {
       val max_waiting_time = 10
       val memory : List[Int] = (0 until length * 8).map { idx =>
         if ((idx + 1) % 4 == 0) {
-          idx / 4
+          idx - 1
         } else {
           0
         }
@@ -77,8 +77,8 @@ class FESpec extends AnyFlatSpec with ChiselScalatestTester {
             }
           }
           assert(flag, s"failed to fetch address $i.")
-          dut.io.instruction.bits.instruction.expect(i.U(32.W))
-          println(s"fetched ${dut.io.instruction.bits.instruction.peekInt().toInt}")
+          dut.io.instruction.bits.op.expect(i.U(32.W))
+          println(s"fetched ${dut.io.instruction.bits.op.peekInt().toInt}")
           Step()
           dut.io.modified_pc.valid.poke(false.B)
         }
