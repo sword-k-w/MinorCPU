@@ -29,6 +29,11 @@ class CPU extends Module {
     val alu_broadcast_to_rs = Flipped(Valid(new ToRSResult))
     val quest = Valid(new ALUQuest)
     val lsq_broadcast_to_rs = Flipped(Valid(new ToRSResult))
+
+    val d_quest_from_lsq = Flipped(Valid(new MemoryQuest))
+    val d_result_to_lsq = Valid(UInt(32.W))
+    val d_quest_from_wb = Flipped(Valid(new MemoryQuest))
+    val d_result_to_wb = Valid(UInt(32.W))
   })
 
   // default
@@ -66,6 +71,10 @@ class CPU extends Module {
   ma.io.mem_a <> io.mem_a
   ma.io.mem_wr <> io.mem_wr
   // TODO MA ports connection
+  ma.io.d_quest_from_lsq <> io.d_quest_from_lsq
+  ma.io.d_result_to_lsq <> io.d_result_to_lsq
+  ma.io.d_quest_from_wb <> io.d_quest_from_wb
+  ma.io.d_result_to_wb <> io.d_result_to_wb
 
 //  iq.io.predict_failed <> rob.io.modified_pc.valid
   iq.io.predict_failed <> io.modified_pc.valid
