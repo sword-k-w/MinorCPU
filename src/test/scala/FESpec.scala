@@ -45,8 +45,8 @@ class FESpec extends AnyFlatSpec with ChiselScalatestTester {
       val length = 5
       val max_waiting_time = 10
       val memory : List[Int] = (0 until length * 8).map { idx =>
-        if ((idx + 1) % 4 == 0) {
-          idx - 1
+        if (idx % 4 == 0) {
+          idx + 3
         } else {
           0
         }
