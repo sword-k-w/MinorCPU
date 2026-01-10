@@ -22,16 +22,16 @@ class MA extends Module {
   val state = RegInit(false.B) // Arbiter state : false is idle, true is reading from memory
   val just_finished = RegInit(false.B) // whether just finished reading 4 bytes
   val index = RegInit(0.U(32.W))
-  
+
   val tmp_array = RegInit(VecInit(Seq.fill(4)(0.U(8.W))))
-  
+
   io.i_result.bits := 0.U
   io.i_result.valid := false.B
   io.mem_dout := 0.U
   io.mem_a := 0.U
   io.mem_wr := false.B
   just_finished := false.B
-  
+
   // printf("(MA) : state = %d\n", state)
   // printf("     : index = %d\n", index)
   // printf("     : just_finished = %d\n", just_finished)
