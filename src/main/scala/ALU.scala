@@ -34,6 +34,8 @@ class ALU extends Module {
   broadcast_to_rob_valid := false.B
   broadcast_to_rs_valid := false.B
   broadcast_to_lsq_valid := false.B
+  broadcast_to_rob.mmio := false.B
+  broadcast_to_lsq.mmio := false.B
   when (io.quest.valid && !io.predict_failed) {
     val res = Wire(UInt(5.W))
     res := 0.U
@@ -63,9 +65,20 @@ class ALU extends Module {
       res := io.quest.bits.in1 + io.quest.bits.in2
     }
     when (io.quest.bits.op === "b00000".U) {
-      broadcast_to_lsq_valid := true.B
-      broadcast_to_lsq.dest := io.quest.bits.dest
-      broadcast_to_lsq.addr := res
+      when (res(17, 16) === "b11".U) { // mmio
+        broadcast_to_rob_valid := true.B
+        broadcast_to_rob.dest := io.quest.bits.dest
+        broadcast_to_rob.addr := res
+        broadcast_to_rob.mmio := true.B
+        broadcast_to_lsq_valid := true.B
+        broadcast_to_lsq.dest := io.quest.bits.dest
+        broadcast_to_lsq.addr := res
+        broadcast_to_lsq.mmio := true.B
+      } .otherwise {
+        broadcast_to_lsq_valid := true.B
+        broadcast_to_lsq.dest := io.quest.bits.dest
+        broadcast_to_lsq.addr := res
+      }
     } .otherwise {
       when (io.quest.bits.op =/= "b01000".U) {
         broadcast_to_rs_valid := true.B

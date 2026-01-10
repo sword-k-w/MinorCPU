@@ -10,6 +10,7 @@ class Instruction extends Bundle {
   val immediate = UInt(32.W)
   val predict_address = UInt(30.W) // for jalr and branch, store the speculation result to check whether need to restart in RoB
   val for_jalr = UInt(12.W)
+  val mmio = Bool()
 }
 
 // instruction queue

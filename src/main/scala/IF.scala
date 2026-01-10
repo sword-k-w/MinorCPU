@@ -36,6 +36,7 @@ class IF extends Module {
   io.instruction.bits.immediate := 0.U
   io.instruction.bits.predict_address := 0.U
   io.instruction.bits.for_jalr := 0.U
+  io.instruction.bits.mmio := false.B
 
   when (op === "b01100".U) { // R
     io.instruction.bits.funct := raw_instruction(30) ## raw_instruction(14, 12)
