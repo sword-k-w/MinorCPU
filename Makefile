@@ -9,6 +9,8 @@ FPGA_TESTCASE_DIR := $(TESTCASE_DIR)/fpga
 
 SIM_DIR := $(PWD)/sim
 
+GEN_DIR := $(PWD)/generated
+
 V_SOURCES := $(shell find $(SRC_DIR) -name '*.v')
 
 ONLINE_JUDGE ?= false
@@ -35,7 +37,7 @@ $(TESTSPACE_DIR):
 	@mkdir -p $(TESTSPACE_DIR)
 
 build_sim: $(SIM_DIR)/testbench.v $(V_SOURCES) $(TESTSPACE_DIR)
-	@iverilog $(IV_FLAGS) -o $(TESTSPACE_DIR)/test $(SIM_DIR)/testbench.v $(V_SOURCES)
+	@iverilog $(IV_FLAGS) -o $(TESTSPACE_DIR)/test $(SIM_DIR)/testbench.v $(V_SOURCES) $(GEN_DIR)/CPU.v
 
 build_sim_test: testcases _no_testcase_name_check
 	@cp $(SIM_TESTCASE_DIR)/*$(name)*.c $(TESTSPACE_DIR)/test.c

@@ -87,5 +87,5 @@ class IQ extends Module {
   for (i <- 0 until 32) {
     entry(i) := new_entry(i)
   }
-  io.new_instruction.ready := new_tail + 1.U === new_head
+  io.new_instruction.ready := new_tail + 1.U =/= new_head
 }

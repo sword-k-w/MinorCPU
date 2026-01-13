@@ -28,20 +28,16 @@ module cpu(
 // - 0x30004 read: read clocks passed since cpu starts (in dword, 4 bytes)
 // - 0x30004 write: indicates program stop (will output '\0' through uart tx)
 
-always @(posedge clk_in)
-  begin
-    if (rst_in)
-      begin
-      
-      end
-    else if (!rdy_in)
-      begin
-      
-      end
-    else
-      begin
-      
-      end
-  end
+CPU kernal (
+  .clock(clk_in),
+  .reset(rst_in),
+  .io_rdy_in(rdy_in),
+  .io_mem_din(mem_din),
+  .io_mem_dout(mem_dout),
+  .io_mem_a(mem_a),
+  .io_mem_wr(mem_wr),
+  .io_io_buffer_full(io_buffer_full),
+  .io_dbgreg_dout(dbgreg_dout)
+);
 
 endmodule
