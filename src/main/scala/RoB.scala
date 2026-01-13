@@ -126,7 +126,7 @@ class RoB extends Module {
         commit_to_rf.reg_id := new_entry(head).instruction.rd
         commit_to_rf.value := new_entry(head).value
         new_head := head + 1.U
-      } .elsewhen (new_entry(head).ready) {
+      } .elsewhen (new_entry(head).ready && !frozen) {
         when (new_entry(head).instruction.op === "b11000".U || new_entry(head).instruction.op === "b11001".U) { // branch or jalr
           when (new_entry(head).instruction.predict_address =/= new_entry(head).value(31, 2)) {
             predict_failed := true.B
