@@ -92,9 +92,6 @@ class RoB extends Module {
     new_head := 0.U
     new_tail := 0.U
     predict_failed := false.B
-    for (i <- 0 until 32) {
-      new_entry(i.U) := entry(i.U)
-    }
   } .otherwise {
     for (i <- 0 until 32) {
       when (i.U === io.alu_broadcast_result.bits.dest && io.alu_broadcast_result.valid) {

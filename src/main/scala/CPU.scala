@@ -73,6 +73,7 @@ class CPU extends Module {
   rs.io.rob_tail <> rob.io.rob_tail
   rs.io.alu_broadcast_result <> alu.io.broadcast_to_rs
   rs.io.lsq_broadcast_result <> lsq.io.broadcast_to_rs
+  rs.io.wb_broadcast_result <> wb.io.broadcast_to_rs
   rs.io.alu_quest <> alu.io.quest
   rs.io.qry1_index <> rob.io.qry1_index
   rs.io.qry1_ready <> rob.io.qry1_ready
@@ -85,6 +86,7 @@ class CPU extends Module {
   rob.io.alu_broadcast_result <> alu.io.broadcast_to_rob
   rob.io.lsq_broadcast_result <> lsq.io.broadcast_to_rob
   rob.io.broadcast_to_lsq <> lsq.io.rob_broadcast_result
+  rob.io.wb_broadcast_result <> wb.io.broadcast_to_rob
 
   lsq.io.predict_failed <> rob.io.modified_pc.valid
   lsq.io.rob_tail <> rob.io.rob_tail

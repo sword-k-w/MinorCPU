@@ -88,6 +88,7 @@ class RS extends Module {
     val new_entry = Wire(Vec(32, new RSEntry))
     val merge_index = Wire(Vec(31, UInt(5.W)))
     for (i <- 0 until 32) {
+      new_entry(i.U) := entry(i.U)
       def CheckDependence1() : Unit = {
         io.qry1_addr := io.new_instruction.bits.rs1
         io.qry1_index := io.qry1_dependence
