@@ -57,7 +57,9 @@ class MA extends Module {
   
   // printf("(MA) : state = %d\n", state)
   // printf("     : index = %d\n", index)
-  // printf("     : just_finished = %d\n", just_finished)
+  // printf("     : just_finished_i = %d\n", just_finished_i)
+  // printf("     : just_finished_d_lsq = %d\n", just_finished_d_lsq)
+  // printf("     : just_finished_d_wb = %d\n", just_finished_d_wb)
   // printf("     : tmp_array(0) = %d\n", tmp_array(0))
   // printf("     : tmp_array(1) = %d\n", tmp_array(1))
   // printf("     : tmp_array(2) = %d\n", tmp_array(2))
