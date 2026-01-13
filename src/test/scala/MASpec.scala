@@ -28,6 +28,7 @@ class MASpec extends AnyFlatSpec with ChiselScalatestTester {
         cycleCount += 1
         println(s"\n[Cycle $cycleCount]")
         if (addr < 8 * length) {
+        // println(s"(memory) : pass ${addr} to MA")
           dut.io.mem_din.poke(memory(addr))
         }
       }
