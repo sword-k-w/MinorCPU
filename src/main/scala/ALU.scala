@@ -37,7 +37,7 @@ class ALU extends Module {
   broadcast_to_rob.mmio := false.B
   broadcast_to_lsq.mmio := false.B
   when (io.quest.valid && !io.predict_failed) {
-    val res = Wire(UInt(5.W))
+    val res = Wire(UInt(32.W))
     res := 0.U
     when (io.quest.bits.op(2) === 1.U) {
       switch (io.quest.bits.funct) {
