@@ -109,11 +109,13 @@ class LSQ extends Module {
           new_entry(i.U).ready := false.B
           new_entry(i.U).dest := io.rob_tail
         }
-      } .elsewhen (io.rob_broadcast_result.valid && io.rob_broadcast_result.bits.dest === entry(i.U).dest) {
+      } .elsewhen (io.rob_broadcast_result.valid && io.rob_broadcast_result.bits.dest === entry(i).dest
+        && !entry(i).ready) {
         new_entry(i.U).ready := true.B
         new_entry(i.U).address := io.rob_broadcast_result.bits.addr
         new_entry(i.U).value := io.rob_broadcast_result.bits.value
-      } .elsewhen (io.alu_broadcast_result.valid && io.alu_broadcast_result.bits.dest === entry(i.U).dest) {
+      } .elsewhen (io.alu_broadcast_result.valid && io.alu_broadcast_result.bits.dest === entry(i).dest
+        && !entry(i).ready) {
         new_entry(i.U).ready := !io.alu_broadcast_result.bits.mmio
         new_entry(i.U).address := io.alu_broadcast_result.bits.addr
         new_entry(i.U).instruction.mmio := io.alu_broadcast_result.bits.mmio
@@ -133,7 +135,7 @@ class LSQ extends Module {
       }
     } .otherwise {
       when (io.memory_result.valid) {
-        val res = UInt(32.W)
+        val res = Wire(UInt(32.W))
         res := io.memory_result.bits
         when (new_entry(head).instruction.funct(2, 0) === 0.U) { // lb (sign-extended)
           when (io.memory_result.bits(7) === 1.U) {

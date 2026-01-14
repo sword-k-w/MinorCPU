@@ -84,7 +84,7 @@ class RS extends Module {
       def CheckDependence1() : Unit = {
         io.qry1_addr := io.new_instruction.bits.rs1
         io.qry1_index := io.qry1_dependence
-        when (io.new_instruction.bits.rs1 === 0.U || !io.qry1_has_dependence) {
+        when (!io.qry1_has_dependence) {
           new_entry(i).valid1 := true.B
           new_entry(i).value1 := io.qry1_val
           new_entry(i).depend1 := 0.U
@@ -101,7 +101,7 @@ class RS extends Module {
       def CheckDependence2() : Unit = {
         io.qry2_addr := io.new_instruction.bits.rs2
         io.qry2_index := io.qry2_dependence
-        when (io.new_instruction.bits.rs2 === 0.U || !io.qry2_has_dependence) {
+        when (!io.qry2_has_dependence) {
           new_entry(i).valid2 := true.B
           new_entry(i).value2 := io.qry2_val
           new_entry(i).depend2 := 0.U
@@ -149,22 +149,25 @@ class RS extends Module {
           CheckDependence1()
         }
       } .otherwise {
-        new_entry(i).op := entry(i).busy
+        new_entry(i).op := entry(i).op
         new_entry(i).funct := entry(i).funct
         new_entry(i).busy := entry(i).busy
         new_entry(i).immediate_s := entry(i).immediate_s
         new_entry(i).is_zero := entry(i).is_zero
 
         // update dependence according to broadcast info
-        when (io.alu_broadcast_result.valid && entry(i).depend1 === io.alu_broadcast_result.bits.dest) {
+        when (io.alu_broadcast_result.valid && entry(i).depend1 === io.alu_broadcast_result.bits.dest
+          && !entry(i).valid1) {
           new_entry(i).valid1 := true.B
           new_entry(i).value1 := io.alu_broadcast_result.bits.value
           new_entry(i).depend1 := 0.U
-        } .elsewhen (io.lsq_broadcast_result.valid && entry(i).depend1 === io.lsq_broadcast_result.bits.dest) {
+        } .elsewhen (io.lsq_broadcast_result.valid && entry(i).depend1 === io.lsq_broadcast_result.bits.dest
+          && !entry(i).valid1) {
           new_entry(i).valid1 := true.B
           new_entry(i).value1 := io.lsq_broadcast_result.bits.value
           new_entry(i).depend1 := 0.U
-        } .elsewhen (io.wb_broadcast_result.valid && entry(i).depend1 === io.wb_broadcast_result.bits.dest) {
+        } .elsewhen (io.wb_broadcast_result.valid && entry(i).depend1 === io.wb_broadcast_result.bits.dest
+          && !entry(i).valid1) {
           new_entry(i).valid1 := true.B
           new_entry(i).value1 := io.wb_broadcast_result.bits.value
           new_entry(i).depend1 := 0.U
@@ -173,15 +176,18 @@ class RS extends Module {
           new_entry(i).value1 := entry(i).value1
           new_entry(i).depend1 := entry(i).depend1
         }
-        when (io.alu_broadcast_result.valid && entry(i).depend2 === io.alu_broadcast_result.bits.dest) {
+        when (io.alu_broadcast_result.valid && entry(i).depend2 === io.alu_broadcast_result.bits.dest
+          && !entry(i).valid2) {
           new_entry(i).valid2 := true.B
           new_entry(i).value2 := io.alu_broadcast_result.bits.value
           new_entry(i).depend2 := 0.U
-        } .elsewhen (io.lsq_broadcast_result.valid && entry(i).depend2 === io.lsq_broadcast_result.bits.dest) {
+        } .elsewhen (io.lsq_broadcast_result.valid && entry(i).depend2 === io.lsq_broadcast_result.bits.dest
+          && !entry(i).valid1) {
           new_entry(i).valid2 := true.B
           new_entry(i).value2 := io.lsq_broadcast_result.bits.value
           new_entry(i).depend2 := 0.U
-        } .elsewhen (io.wb_broadcast_result.valid && entry(i).depend2 === io.wb_broadcast_result.bits.dest) {
+        } .elsewhen (io.wb_broadcast_result.valid && entry(i).depend2 === io.wb_broadcast_result.bits.dest
+          && !entry(i).valid1) {
           new_entry(i).valid2 := true.B
           new_entry(i).value2 := io.wb_broadcast_result.bits.value
           new_entry(i).depend2 := 0.U
