@@ -19,3 +19,5 @@ generated/**
 build/**
 .idea/**
 .bsp/**
+
+debug_record.txt
