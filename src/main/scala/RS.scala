@@ -156,15 +156,18 @@ class RS extends Module {
         new_entry(i).is_zero := entry(i).is_zero
 
         // update dependence according to broadcast info
-        when (io.alu_broadcast_result.valid && entry(i).depend1 === io.alu_broadcast_result.bits.dest) {
+        when (io.alu_broadcast_result.valid && entry(i).depend1 === io.alu_broadcast_result.bits.dest
+          && !entry(i).valid1) {
           new_entry(i).valid1 := true.B
           new_entry(i).value1 := io.alu_broadcast_result.bits.value
           new_entry(i).depend1 := 0.U
-        } .elsewhen (io.lsq_broadcast_result.valid && entry(i).depend1 === io.lsq_broadcast_result.bits.dest) {
+        } .elsewhen (io.lsq_broadcast_result.valid && entry(i).depend1 === io.lsq_broadcast_result.bits.dest
+          && !entry(i).valid1) {
           new_entry(i).valid1 := true.B
           new_entry(i).value1 := io.lsq_broadcast_result.bits.value
           new_entry(i).depend1 := 0.U
-        } .elsewhen (io.wb_broadcast_result.valid && entry(i).depend1 === io.wb_broadcast_result.bits.dest) {
+        } .elsewhen (io.wb_broadcast_result.valid && entry(i).depend1 === io.wb_broadcast_result.bits.dest
+          && !entry(i).valid1) {
           new_entry(i).valid1 := true.B
           new_entry(i).value1 := io.wb_broadcast_result.bits.value
           new_entry(i).depend1 := 0.U
@@ -173,15 +176,18 @@ class RS extends Module {
           new_entry(i).value1 := entry(i).value1
           new_entry(i).depend1 := entry(i).depend1
         }
-        when (io.alu_broadcast_result.valid && entry(i).depend2 === io.alu_broadcast_result.bits.dest) {
+        when (io.alu_broadcast_result.valid && entry(i).depend2 === io.alu_broadcast_result.bits.dest
+          && !entry(i).valid2) {
           new_entry(i).valid2 := true.B
           new_entry(i).value2 := io.alu_broadcast_result.bits.value
           new_entry(i).depend2 := 0.U
-        } .elsewhen (io.lsq_broadcast_result.valid && entry(i).depend2 === io.lsq_broadcast_result.bits.dest) {
+        } .elsewhen (io.lsq_broadcast_result.valid && entry(i).depend2 === io.lsq_broadcast_result.bits.dest
+          && !entry(i).valid1) {
           new_entry(i).valid2 := true.B
           new_entry(i).value2 := io.lsq_broadcast_result.bits.value
           new_entry(i).depend2 := 0.U
-        } .elsewhen (io.wb_broadcast_result.valid && entry(i).depend2 === io.wb_broadcast_result.bits.dest) {
+        } .elsewhen (io.wb_broadcast_result.valid && entry(i).depend2 === io.wb_broadcast_result.bits.dest
+          && !entry(i).valid1) {
           new_entry(i).valid2 := true.B
           new_entry(i).value2 := io.wb_broadcast_result.bits.value
           new_entry(i).depend2 := 0.U
