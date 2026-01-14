@@ -64,9 +64,9 @@ class IF extends Module {
   } .elsewhen (op === "b11011".U) { // J
     io.instruction.bits.immediate := pc + 4.U
   } .elsewhen (op === "b00101".U) { // auipc
-    io.instruction.bits.immediate := (raw_instruction(31, 20) ## 0.U(12.W)) + pc
+    io.instruction.bits.immediate := (raw_instruction(31, 12) ## 0.U(12.W)) + pc
   } .otherwise { // lui
-    io.instruction.bits.immediate := raw_instruction(31, 20) ## 0.U(12.W)
+    io.instruction.bits.immediate := raw_instruction(31, 12) ## 0.U(12.W)
   }
 
   when (io.modified_pc.valid) {
