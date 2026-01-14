@@ -65,7 +65,9 @@ class MA extends Module {
   // printf("     : tmp_array(2) = %d\n", tmp_array(2))
   // printf("     : tmp_array(3) = %d\n", tmp_array(3))
   // printf("     : io.mem_din = %d\n", io.mem_din)
-  // printf("     : io.i_result = %d\n", io.mem_din ## tmp_array(2) ## tmp_array(1) ## tmp_array(0))
+  // printf("     : io.mem_dout = %d\n", io.mem_dout)
+  // printf("     : io.mem_a = %d\n", io.mem_a)
+  // printf("     : io.mem_wr = %d\n", io.mem_wr)
 
   val lsq_max_index = Wire(UInt(2.W))
   lsq_max_index := 0.U
@@ -131,11 +133,19 @@ class MA extends Module {
             state := 4.U(3.W)
             io.mem_a := io.d_quest_from_wb.bits.addr
             index := io.d_quest_from_wb.bits.addr
+            when (wb_max_index === 0.U) {
+              state := 0.U(3.W)
+              just_finished_d_wb := true.B
+            }
           }
         } .elsewhen (io.d_quest_from_lsq.valid) {
           state := 2.U(3.W)
           io.mem_a := io.d_quest_from_lsq.bits.addr
           index := io.d_quest_from_lsq.bits.addr
+          when (lsq_max_index === 0.U) {
+            state := 0.U(3.W)
+            just_finished_d_lsq := true.B
+          }
         } .elsewhen(io.i_quest.valid) {
           state := 1.U(3.W)
           io.mem_a := io.i_quest.bits
