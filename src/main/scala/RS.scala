@@ -181,10 +181,10 @@ class RS extends Module {
           new_entry(i).valid2 := true.B
           new_entry(i).value2 := io.lsq_broadcast_result.bits.value
           new_entry(i).depend2 := 0.U
-        } .elsewhen (io.wb_broadcast_result.valid && entry(i).depend1 === io.wb_broadcast_result.bits.dest) {
-          new_entry(i).valid1 := true.B
-          new_entry(i).value1 := io.wb_broadcast_result.bits.value
-          new_entry(i).depend1 := 0.U
+        } .elsewhen (io.wb_broadcast_result.valid && entry(i).depend2 === io.wb_broadcast_result.bits.dest) {
+          new_entry(i).valid2 := true.B
+          new_entry(i).value2 := io.wb_broadcast_result.bits.value
+          new_entry(i).depend2 := 0.U
         } .otherwise {
           new_entry(i).valid2 := entry(i).valid2
           new_entry(i).value2 := entry(i).value2

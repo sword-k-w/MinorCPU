@@ -40,11 +40,11 @@ class IF extends Module {
 
   when (op === "b01100".U) { // R
     io.instruction.bits.funct := raw_instruction(30) ## raw_instruction(14, 12)
-  } .elsewhen (op === "b00100".U) { // IA
-    when (raw_instruction(14, 12) === "b101".U || raw_instruction(14, 12) === "b001".U) {
+  } .elsewhen (op === "b00100".U) {
+    when (raw_instruction(14, 12) === "b101".U || raw_instruction(14, 12) === "b001".U) { // I*
       io.instruction.bits.funct := raw_instruction(30) ## raw_instruction(14, 12)
       io.instruction.bits.immediate := raw_instruction(24, 20)
-    } .otherwise {
+    } .otherwise { // IA
       io.instruction.bits.funct := raw_instruction(14, 12)
       io.instruction.bits.immediate := raw_instruction(31, 20).asSInt.pad(32).asUInt
     }
