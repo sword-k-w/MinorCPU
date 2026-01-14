@@ -42,7 +42,7 @@ class MA extends Module {
 
   val state = RegInit(0.U(3.W)) // Arbiter state : 0 -> idle, 1 -> reading instruction for ICache,
                                 //                 2 -> reading data for LSQ, 3 -> writing data for WB,
-                                //                 4 -> reading data for WB, 5 -> halt
+                                //                 4 -> reading data for WB, 5 -> halt, 6 -> pause
   val just_finished_i = RegInit(false.B)     // whether just finished reading 4 bytes of instruction for ICache
   val just_finished_d_lsq = RegInit(false.B) // whether just finished reading 4 bytes of data for LSQ
   val just_finished_d_wb = RegInit(false.B)  // whether just finished reading 4 bytes of data for WB
@@ -148,7 +148,7 @@ class MA extends Module {
               index := io.d_quest_from_wb.bits.addr
               io.mem_dout := io.d_quest_from_wb.bits.value(7, 0)
               when (wb_max_index === 0.U) {
-                state := 0.U(3.W)
+                state := 6.U(3.W)
                 d_result_to_wb_valid_reg := true.B
               }
             }
@@ -157,7 +157,7 @@ class MA extends Module {
             io.mem_a := io.d_quest_from_wb.bits.addr
             index := io.d_quest_from_wb.bits.addr
             when (wb_max_index === 0.U) {
-              state := 0.U(3.W)
+              state := 6.U(3.W)
               just_finished_d_wb := true.B
             }
           }
@@ -166,7 +166,7 @@ class MA extends Module {
           io.mem_a := io.d_quest_from_lsq.bits.addr
           index := io.d_quest_from_lsq.bits.addr
           when (lsq_max_index === 0.U) {
-            state := 0.U(3.W)
+            state := 6.U(3.W)
             just_finished_d_lsq := true.B
           }
         } .elsewhen(io.i_quest.valid) {
@@ -182,7 +182,7 @@ class MA extends Module {
         io.mem_a := next_index
         index := next_index
         when ((next_index(1, 0) & 3.U) === 3.U) {
-          state := 0.U
+          state := 6.U
           just_finished_i := true.B
         }
       }
@@ -193,7 +193,7 @@ class MA extends Module {
         io.mem_a := next_index
         index := next_index
         when ((next_index(1, 0) & 3.U) === lsq_max_index) {
-          state := 0.U
+          state := 6.U
           just_finished_d_lsq := true.B
         }
       }
@@ -205,7 +205,7 @@ class MA extends Module {
         index := next_index
         io.mem_dout := tmp_array(next_index(1, 0) & 3.U)
         when ((next_index(1, 0) & 3.U) === wb_max_index) {
-          state := 0.U
+          state := 6.U
           d_result_to_wb_valid_reg := true.B
         }
       }
@@ -216,7 +216,7 @@ class MA extends Module {
         io.mem_a := next_index
         index := next_index
         when ((next_index(1, 0) & 3.U) === wb_max_index) {
-          state := 0.U
+          state := 6.U
           just_finished_d_wb := true.B
         }
       }
@@ -225,6 +225,14 @@ class MA extends Module {
         i_result_valid_reg := false.B
         d_result_to_lsq_valid_reg := false.B
         d_result_to_wb_valid_reg := false.B
+      }
+
+      is (6.U) { // pause
+        state := 0.U
+        i_result_valid_reg := false.B
+        d_result_to_lsq_valid_reg := false.B
+        d_result_to_wb_valid_reg := false.B
+        io.mem_a := 0.U
       }
 
     }
