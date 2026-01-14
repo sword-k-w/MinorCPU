@@ -33,8 +33,8 @@ class WB extends Module {
   val new_tail = Wire(UInt(3.W))
   val new_entry = Wire(Vec(8, new AddrValue))
 
-  val memory_quest = Reg(new MemoryQuest)
-  val memory_quest_valid = RegInit(false.B)
+//  val memory_quest = Reg(new MemoryQuest)
+//  val memory_quest_valid = RegInit(false.B)
 
   val broadcast_to_rs = Reg(new ToRSResult)
   val broadcast_to_rs_valid = RegInit(false.B)
@@ -42,7 +42,12 @@ class WB extends Module {
   val broadcast_to_rob = Reg(new LSQToRoBResult)
   val broadcast_to_rob_valid = RegInit(false.B)
 
-  memory_quest_valid := false.B
+  io.memory_quest.valid := false.B
+  io.memory_quest.bits.addr := 0.U
+  io.memory_quest.bits.value := 0.U
+  io.memory_quest.bits.size := 0.U
+  io.memory_quest.bits.wr_en := 0.U
+//  memory_quest_valid := false.B
   broadcast_to_rs_valid := false.B
   broadcast_to_rob_valid := false.B
   new_head := head
@@ -75,11 +80,16 @@ class WB extends Module {
       }
       new_head := head + 1.U
     } .otherwise {
-      memory_quest_valid := true.B
-      memory_quest.addr := new_entry(head).addr
-      memory_quest.value := new_entry(head).value
-      memory_quest.size := new_entry(head).size
-      memory_quest.wr_en := !new_entry(head).mmio
+      io.memory_quest.valid := true.B
+      io.memory_quest.bits.addr := new_entry(head).addr
+      io.memory_quest.bits.value := new_entry(head).value
+      io.memory_quest.bits.size := new_entry(head).size
+      io.memory_quest.bits.wr_en := !new_entry(head).mmio
+//      memory_quest_valid := true.B
+//      memory_quest.addr := new_entry(head).addr
+//      memory_quest.value := new_entry(head).value
+//      memory_quest.size := new_entry(head).size
+//      memory_quest.wr_en := !new_entry(head).mmio
     }
   }
 
@@ -91,8 +101,8 @@ class WB extends Module {
 
   io.is_empty := new_head === new_tail
   io.is_full := new_tail + 1.U === new_head
-  io.memory_quest.valid := memory_quest_valid
-  io.memory_quest.bits := memory_quest
+//  io.memory_quest.valid := memory_quest_valid
+//  io.memory_quest.bits := memory_quest
   io.broadcast_to_rs.valid := broadcast_to_rs_valid
   io.broadcast_to_rs.bits := broadcast_to_rs
   io.broadcast_to_rob.valid := broadcast_to_rob_valid

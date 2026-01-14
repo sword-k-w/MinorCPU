@@ -25,8 +25,8 @@ class ICache(val log_size : Int = 10) extends Module {
   val tag_array = RegInit(VecInit(Seq.fill(size)(0.U(20.W))))
   val valid_array = RegInit(VecInit(Seq.fill(size)(false.B)))
 
-  val mem_quest_bits = RegInit(0.U(32.W))
-  val mem_quest_valid = RegInit(false.B)
+//  val mem_quest_bits = RegInit(0.U(32.W))
+//  val mem_quest_valid = RegInit(false.B)
   val quest_result = RegInit(false.B)
   val quest_result2_valid = RegInit(false.B)
   val quest_result2_bits = RegInit(0.U(32.W))
@@ -40,8 +40,10 @@ class ICache(val log_size : Int = 10) extends Module {
   val index = io.quest(log_size + 1, 2)
   val quest_tag = io.quest(31, log_size + 2)
 
-  mem_quest_valid := false.B
-  mem_quest_bits := 0.U
+  io.mem_quest.valid := false.B
+  io.mem_quest.bits := 0.U
+//  mem_quest_valid := false.B
+//  mem_quest_bits := 0.U
 
   quest_result := false.B
   quest_result2_bits := 0.U
@@ -68,16 +70,18 @@ class ICache(val log_size : Int = 10) extends Module {
         quest_result := true.B
       } .otherwise {
         state := true.B
-        mem_quest_valid := true.B
-        mem_quest_bits := io.quest
+        io.mem_quest.valid := true.B
+        io.mem_quest.bits := io.quest
+//        mem_quest_valid := true.B
+//        mem_quest_bits := io.quest
       }
     }
   }
 
   io.quest_result.bits := data_array.read(index)
   io.quest_result.valid := quest_result
-  io.mem_quest.valid := mem_quest_valid
-  io.mem_quest.bits := mem_quest_bits
+//  io.mem_quest.valid := mem_quest_valid
+//  io.mem_quest.bits := mem_quest_bits
   io.quest_result2.valid := quest_result2_valid
   io.quest_result2.bits := quest_result2_bits
 }

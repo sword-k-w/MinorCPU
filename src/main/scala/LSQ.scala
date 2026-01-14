@@ -60,8 +60,8 @@ class LSQ extends Module {
   val head = RegInit(0.U(5.W))
   val tail = RegInit(0.U(5.W))
 
-  val memory_quest = Reg(new MemoryQuest)
-  val memory_quest_valid = RegInit(false.B)
+//  val memory_quest = Reg(new MemoryQuest)
+//  val memory_quest_valid = RegInit(false.B)
 
   val broadcast_to_rs = Reg(new ToRSResult)
   val broadcast_to_rs_valid = RegInit(false.B)
@@ -76,7 +76,11 @@ class LSQ extends Module {
   val new_tail = Wire(UInt(5.W))
   val new_entry = Wire(Vec(32, new LSQEntry))
 
-  memory_quest_valid := false.B
+  io.memory_quest.valid := false.B
+  io.memory_quest.bits.addr := 0.U
+  io.memory_quest.bits.size := 0.U
+  io.memory_quest.bits.wr_en := 0.U
+//  memory_quest_valid := false.B
   broadcast_to_rs_valid := false.B
   broadcast_to_rob_valid := false.B
   store_to_wb_valid := false.B
@@ -139,18 +143,22 @@ class LSQ extends Module {
         when (new_head =/= new_tail && new_entry(new_head).ready) {
           assert(new_entry(new_head).instruction.op === "b00000".U, "a committed store occurs behind a uncommitted load!")
           when (io.wb_is_empty) {
-            memory_quest_valid := true.B
-            memory_quest.addr := new_entry(new_head).address
-            memory_quest.size := new_entry(new_head).instruction.funct(1, 0)
-            memory_quest.wr_en := false.B
+            io.memory_quest.valid := true.B
+            io.memory_quest.bits.addr := new_entry(new_head).address
+            io.memory_quest.bits.size := new_entry(new_head).instruction.funct(1, 0)
+            io.memory_quest.bits.wr_en := false.B
+//            memory_quest_valid := true.B
+//            memory_quest.addr := new_entry(new_head).address
+//            memory_quest.size := new_entry(new_head).instruction.funct(1, 0)
+//            memory_quest.wr_en := false.B
           }
         }
       } .otherwise {
         when (io.wb_is_empty) {
-          memory_quest_valid := true.B
-          memory_quest.addr := new_entry(head).address
-          memory_quest.size := new_entry(head).instruction.funct(1, 0)
-          memory_quest.wr_en := false.B
+          io.memory_quest.valid := true.B
+          io.memory_quest.bits.addr := new_entry(head).address
+          io.memory_quest.bits.size := new_entry(head).instruction.funct(1, 0)
+          io.memory_quest.bits.wr_en := false.B
         }
       }
     }
@@ -161,8 +169,8 @@ class LSQ extends Module {
   for (i <- 0 until 32) {
     entry(i.U) := new_entry(i.U)
   }
-  io.memory_quest.valid := memory_quest_valid
-  io.memory_quest.bits := memory_quest
+//  io.memory_quest.valid := memory_quest_valid
+//  io.memory_quest.bits := memory_quest
   io.broadcast_to_rs.valid := broadcast_to_rs_valid
   io.broadcast_to_rs.bits := broadcast_to_rs
   io.broadcast_to_rob.valid := broadcast_to_rob_valid
