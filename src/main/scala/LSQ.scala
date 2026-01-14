@@ -92,6 +92,9 @@ class LSQ extends Module {
       new_entry(i.U) := entry(i.U)
     }
   } .otherwise {
+    when (io.new_instruction.valid) {
+      new_tail := tail + 1.U
+    }
     for (i <- 0 until 32) {
       new_entry(i.U) := entry(i.U)
       when (i.U === tail) {
@@ -99,7 +102,6 @@ class LSQ extends Module {
           new_entry(i.U).instruction := io.new_instruction.bits
           new_entry(i.U).ready := false.B
           new_entry(i.U).dest := io.rob_tail
-          new_tail := tail + 1.U
         }
       } .elsewhen (io.rob_broadcast_result.valid && io.rob_broadcast_result.bits.dest === entry(i.U).dest) {
         new_entry(i.U).ready := true.B

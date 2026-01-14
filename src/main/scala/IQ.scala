@@ -53,13 +53,12 @@ class IQ extends Module {
       new_entry(i) := entry(i)
     }
   } .otherwise {
+    new_tail := Mux(io.new_instruction.valid, tail + 1.U, tail)
     for (i <- 0 until 32) {
       when (i.U === tail && io.new_instruction.valid) {
         new_entry(i) := io.new_instruction.bits
-        new_tail := tail + 1.U
       } .otherwise {
         new_entry(i) := entry(i)
-        new_tail := tail
       }
     }
     when (head =/= new_tail && io.instruction_to_rob.ready && io.instruction_to_lsq.ready) {

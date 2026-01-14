@@ -93,6 +93,9 @@ class RoB extends Module {
     new_tail := 0.U
     predict_failed := false.B
   } .otherwise {
+    when (io.new_instruction.valid) {
+      new_tail := tail + 1.U
+    }
     for (i <- 0 until 32) {
       when (i.U === io.alu_broadcast_result.bits.dest && io.alu_broadcast_result.valid) {
         new_entry(i.U).ready := true.B // pretend to commit if mmio
@@ -108,7 +111,6 @@ class RoB extends Module {
       } .elsewhen (i.U === tail && io.new_instruction.valid) {
         new_entry(i.U).instruction := io.new_instruction.bits
         new_entry(i.U).ready := false.B
-        new_tail := tail + 1.U
       }
     }
 
