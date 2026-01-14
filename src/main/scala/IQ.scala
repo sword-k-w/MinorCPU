@@ -77,7 +77,8 @@ class IQ extends Module {
   io.instruction_to_rob.bits := issue_instruction
   io.instruction_to_rs.valid := issue_instruction_valid
   io.instruction_to_rs.bits := issue_instruction
-  io.instruction_to_lsq.valid := issue_instruction_valid
+  io.instruction_to_lsq.valid := issue_instruction_valid &&
+    (issue_instruction.op === "b00000".U || issue_instruction.op === "b01000".U)
   io.instruction_to_lsq.bits := issue_instruction
   io.new_dependence_valid := new_dependence_valid
   io.new_reg_id := new_reg_id
