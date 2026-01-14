@@ -133,7 +133,7 @@ class LSQ extends Module {
       }
     } .otherwise {
       when (io.memory_result.valid) {
-        val res = UInt(32.W)
+        val res = Wire(UInt(32.W))
         res := io.memory_result.bits
         when (new_entry(head).instruction.funct(2, 0) === 0.U) { // lb (sign-extended)
           when (io.memory_result.bits(7) === 1.U) {
