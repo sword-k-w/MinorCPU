@@ -63,6 +63,9 @@ class ICache(val log_size : Int = 10) extends Module {
         valid_array(index) := true.B
         tag_array(index) := quest_tag
         data_array.write(index, io.mem_result.bits) 
+      } .otherwise {
+        io.mem_quest.valid := true.B
+        io.mem_quest.bits := io.quest
       }
     } .otherwise {
       val hit = (valid_array(index) && tag_array(index) === quest_tag)
