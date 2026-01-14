@@ -474,7 +474,73 @@ class MASpec extends AnyFlatSpec with ChiselScalatestTester {
 
       ShowCurrentMemory()
 
-      // cycle 19 -- check the memory
+      // cycle 19 -- poke lb
+      dut.io.predict_failed.poke(false.B)
+
+      dut.io.i_quest.valid.poke(false.B)
+      dut.io.i_quest.bits.poke(0.U)
+
+      dut.io.d_quest_from_lsq.valid.poke(false.B)
+      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
+      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
+      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
+      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
+
+      dut.io.d_quest_from_wb.valid.poke(true.B)
+      dut.io.d_quest_from_wb.bits.addr.poke(16.U)
+      dut.io.d_quest_from_wb.bits.value.poke(0.U)
+      dut.io.d_quest_from_wb.bits.size.poke(0.U)
+      dut.io.d_quest_from_wb.bits.wr_en.poke(false.B)
+
+      Step()
+
+      ShowCurrentMemory()
+
+      // cycle 20 -- check the memory
+      dut.io.predict_failed.poke(false.B)
+
+      dut.io.i_quest.valid.poke(false.B)
+      dut.io.i_quest.bits.poke(0.U)
+
+      dut.io.d_quest_from_lsq.valid.poke(false.B)
+      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
+      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
+      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
+      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
+
+      dut.io.d_quest_from_wb.valid.poke(false.B)
+      dut.io.d_quest_from_wb.bits.addr.poke(0.U)
+      dut.io.d_quest_from_wb.bits.value.poke(0.U)
+      dut.io.d_quest_from_wb.bits.size.poke(0.U)
+      dut.io.d_quest_from_wb.bits.wr_en.poke(false.B)
+
+      Step()
+
+      ShowCurrentMemory()
+
+      // cycle 21 -- check the memory
+      dut.io.predict_failed.poke(false.B)
+
+      dut.io.i_quest.valid.poke(false.B)
+      dut.io.i_quest.bits.poke(0.U)
+
+      dut.io.d_quest_from_lsq.valid.poke(false.B)
+      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
+      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
+      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
+      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
+
+      dut.io.d_quest_from_wb.valid.poke(false.B)
+      dut.io.d_quest_from_wb.bits.addr.poke(0.U)
+      dut.io.d_quest_from_wb.bits.value.poke(0.U)
+      dut.io.d_quest_from_wb.bits.size.poke(0.U)
+      dut.io.d_quest_from_wb.bits.wr_en.poke(false.B)
+
+      Step()
+
+      ShowCurrentMemory()
+
+      // cycle 22 -- check the memory
       dut.io.predict_failed.poke(false.B)
 
       dut.io.i_quest.valid.poke(false.B)
