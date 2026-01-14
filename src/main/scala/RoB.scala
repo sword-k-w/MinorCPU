@@ -99,19 +99,20 @@ class RoB extends Module {
     }
     for (i <- 0 until 32) {
       when (i.U === io.alu_broadcast_result.bits.dest && io.alu_broadcast_result.valid) {
-        new_entry(i.U).ready := true.B // pretend to commit if mmio
-        new_entry(i.U).value := io.alu_broadcast_result.bits.value
-        new_entry(i.U).addr := io.alu_broadcast_result.bits.addr
-        new_entry(i.U).instruction.mmio := io.alu_broadcast_result.bits.mmio
+        new_entry(i).ready := true.B // pretend to commit if mmio
+        new_entry(i).value := io.alu_broadcast_result.bits.value
+        new_entry(i).addr := io.alu_broadcast_result.bits.addr
+        new_entry(i).instruction.mmio := io.alu_broadcast_result.bits.mmio
       } .elsewhen (i.U === io.lsq_broadcast_result.bits.dest && io.lsq_broadcast_result.valid) {
-        new_entry(i.U).ready := true.B
-        new_entry(i.U).value := io.lsq_broadcast_result.bits.value
+        new_entry(i).ready := true.B
+        new_entry(i).value := io.lsq_broadcast_result.bits.value
       } .elsewhen (i.U === io.wb_broadcast_result.bits.dest && io.wb_broadcast_result.valid) {
-        new_entry(i.U).mmio_ready := true.B // real commit
-        new_entry(i.U).value := io.wb_broadcast_result.bits.value
+        new_entry(i).mmio_ready := true.B // real commit
+        new_entry(i).value := io.wb_broadcast_result.bits.value
       } .elsewhen (i.U === tail && io.new_instruction.valid) {
-        new_entry(i.U).instruction := io.new_instruction.bits
-        new_entry(i.U).ready := false.B
+        new_entry(i).instruction := io.new_instruction.bits
+        new_entry(i).ready := false.B
+        new_entry(i).mmio_ready := false.B
       }
     }
 
