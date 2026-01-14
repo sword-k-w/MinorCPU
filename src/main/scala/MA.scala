@@ -112,11 +112,12 @@ class MA extends Module {
           }
           io.d_result_to_wb.valid := true.B
         }
+        io.mem_a := 0.U
 
         // priority: WB/LSQ > ICache
         when(io.d_quest_from_wb.valid) {
           when (io.d_quest_from_wb.bits.wr_en) { // write
-            when (io.d_quest_from_wb.bits.addr === 0xffffffff.U &&
+            when (io.d_quest_from_wb.bits.addr === 0xffffffffL.U(32.W) &&
                 wb_max_index === 0.U && io.d_quest_from_wb.bits.value(7, 0) === 0.U) {
               state := 5.U(3.W)
               io.i_result.valid := false.B
