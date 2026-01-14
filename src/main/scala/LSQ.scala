@@ -77,6 +77,7 @@ class LSQ extends Module {
   val new_entry = Wire(Vec(32, new LSQEntry))
 
   io.memory_quest.valid := false.B
+  io.memory_quest.bits.value := 0.U
   io.memory_quest.bits.addr := 0.U
   io.memory_quest.bits.size := 0.U
   io.memory_quest.bits.wr_en := 0.U
