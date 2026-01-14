@@ -127,15 +127,24 @@ class RoB extends Module {
         commit_to_rf.value := new_entry(head).value
         new_head := head + 1.U
       } .elsewhen (new_entry(head).ready && !frozen) {
-        when (new_entry(head).instruction.op === "b11000".U || new_entry(head).instruction.op === "b11001".U) { // branch or jalr
+        when (new_entry(head).instruction.op === "b11000".U) { // branch
+          when (new_entry(head).value =/= 0.U) {
+            predict_failed := true.B
+            io.modified_pc.valid := true.B
+            io.modified_pc.bits := new_entry(head).instruction.immediate
+            // maybe something else need to do?
+            // frozen := false.B (I don't think this is needed)
+          }
+          new_head := head + 1.U
+        } .elsewhen (new_entry(head).instruction.op === "b11001".U) { // jalr
           when (new_entry(head).instruction.predict_address =/= new_entry(head).addr(31, 2)) {
             predict_failed := true.B
             io.modified_pc.valid := true.B
             io.modified_pc.bits := new_entry(head).addr
-            new_head := head + 1.U
             // maybe something else need to do?
             // frozen := false.B (I don't think this is needed)
           }
+          new_head := head + 1.U
         } .elsewhen(new_entry(head).instruction.op === "b01000".U || new_entry(head).instruction.mmio) { // S
           when (!io.wb_is_full) {
             broadcast_to_lsq_valid := true.B
