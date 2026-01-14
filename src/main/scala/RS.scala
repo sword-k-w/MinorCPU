@@ -84,7 +84,7 @@ class RS extends Module {
       def CheckDependence1() : Unit = {
         io.qry1_addr := io.new_instruction.bits.rs1
         io.qry1_index := io.qry1_dependence
-        when (io.new_instruction.bits.rs1 === 0.U || !io.qry1_has_dependence) {
+        when (!io.qry1_has_dependence) {
           new_entry(i).valid1 := true.B
           new_entry(i).value1 := io.qry1_val
           new_entry(i).depend1 := 0.U
@@ -101,7 +101,7 @@ class RS extends Module {
       def CheckDependence2() : Unit = {
         io.qry2_addr := io.new_instruction.bits.rs2
         io.qry2_index := io.qry2_dependence
-        when (io.new_instruction.bits.rs2 === 0.U || !io.qry2_has_dependence) {
+        when (!io.qry2_has_dependence) {
           new_entry(i).valid2 := true.B
           new_entry(i).value2 := io.qry2_val
           new_entry(i).depend2 := 0.U

@@ -180,10 +180,12 @@ class RoB extends Module {
   io.commit_to_rf.bits := commit_to_rf
   io.commit_to_rf.valid := commit_to_rf_valid
 
-  io.qry1_ready := entry(io.qry1_index).ready
+  io.qry1_ready := entry(io.qry1_index).ready &&
+    (!entry(io.qry1_index).instruction.mmio || entry(io.qry1_index).mmio_ready)
   io.qry1_value := entry(io.qry1_index).value
 
-  io.qry2_ready := entry(io.qry2_index).ready
+  io.qry2_ready := entry(io.qry2_index).ready &&
+    (!entry(io.qry2_index).instruction.mmio || entry(io.qry2_index).mmio_ready)
   io.qry2_value := entry(io.qry2_index).value
 
   io.rob_tail := tail
