@@ -41,6 +41,7 @@ class ICache(val log_size : Int = 10) extends Module {
   val quest_tag = io.quest(31, log_size + 2)
 
   mem_quest_valid := false.B
+  mem_quest_bits := 0.U
 
   quest_result := false.B
   quest_result2_bits := 0.U

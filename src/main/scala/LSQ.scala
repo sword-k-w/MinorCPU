@@ -56,7 +56,7 @@ class LSQ extends Module {
     val store_to_wb = Valid(new AddrValue)
   })
 
-  val entry = Reg(Vec(32, new LSQEntry))
+  val entry = RegInit(VecInit(Seq.fill(32)(0.U.asTypeOf(new LSQEntry))))
   val head = RegInit(0.U(5.W))
   val tail = RegInit(0.U(5.W))
 
@@ -79,6 +79,7 @@ class LSQ extends Module {
   memory_quest_valid := false.B
   broadcast_to_rs_valid := false.B
   broadcast_to_rob_valid := false.B
+  store_to_wb_valid := false.B
 
   new_head := head
   new_tail := tail

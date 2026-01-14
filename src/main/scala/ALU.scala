@@ -25,17 +25,25 @@ class ALU extends Module {
   })
 
   val broadcast_to_rob = Reg(new ALUToRoBResult)
-  val broadcast_to_rob_valid = Reg(Bool())
+  val broadcast_to_rob_valid = RegInit(false.B)
   val broadcast_to_rs = Reg(new ToRSResult)
-  val broadcast_to_rs_valid = Reg(Bool())
+  val broadcast_to_rs_valid = RegInit(false.B)
   val broadcast_to_lsq = Reg(new ALUBroadcastResult)
-  val broadcast_to_lsq_valid = Reg(Bool())
+  val broadcast_to_lsq_valid = RegInit(false.B)
 
   broadcast_to_rob_valid := false.B
-  broadcast_to_rs_valid := false.B
-  broadcast_to_lsq_valid := false.B
+  broadcast_to_rob.dest := 0.U
+  broadcast_to_rob.value := 0.U
+  broadcast_to_rob.addr := 0.U
   broadcast_to_rob.mmio := false.B
+  broadcast_to_rs_valid := false.B
+  broadcast_to_rs.dest := 0.U
+  broadcast_to_rs.value := 0.U
+  broadcast_to_lsq_valid := false.B
+  broadcast_to_lsq.dest := 0.U
+  broadcast_to_lsq.addr := 0.U
   broadcast_to_lsq.mmio := false.B
+
   when (io.quest.valid && !io.predict_failed) {
     val res = Wire(UInt(32.W))
     res := 0.U

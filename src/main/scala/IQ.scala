@@ -39,12 +39,13 @@ class IQ extends Module {
   val new_entry = Wire(Vec(32, new Instruction))
 
   val issue_instruction = Reg(new Instruction)
-  val issue_instruction_valid = Reg(Bool())
+  val issue_instruction_valid = RegInit(false.B)
 
   val new_dependence_valid = RegInit(false.B)
   val new_reg_id = RegInit(0.U(5.W))
 
   issue_instruction_valid := false.B
+  new_dependence_valid := false.B
 
   when (io.predict_failed) {
     new_head := 0.U
