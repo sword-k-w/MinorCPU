@@ -6,7 +6,7 @@ class Instruction extends Bundle {
   val rs1 = UInt(5.W)
   val rs2 = UInt(5.W)
   val op = UInt(5.W) // use first five bits
-  val funct = UInt(4.W) // funct7[1] | funct3
+  val funct = UInt(4.W) // funct7[5] | funct3
   val immediate = UInt(32.W)
   val predict_address = UInt(30.W) // for jalr and branch, store the speculation result to check whether need to restart in RoB
   val for_jalr = UInt(12.W)
