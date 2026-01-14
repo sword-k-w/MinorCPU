@@ -33,12 +33,12 @@ class MA extends Module {
   val d_result_to_wb_reg = Reg(UInt(32.W))
   val d_result_to_wb_valid_reg = RegInit(false.B)
 
-  io.i_result.valid <> i_result_valid_reg
-  io.i_result.bits <> i_result_reg
-  io.d_result_to_lsq.valid <> d_result_to_lsq_valid_reg
-  io.d_result_to_lsq.bits <> d_result_to_lsq_reg
-  io.d_result_to_wb.valid <> d_result_to_wb_valid_reg
-  io.d_result_to_wb.bits <> d_result_to_wb_reg
+  io.i_result.valid := i_result_valid_reg
+  io.i_result.bits := i_result_reg
+  io.d_result_to_lsq.valid := d_result_to_lsq_valid_reg
+  io.d_result_to_lsq.bits := d_result_to_lsq_reg
+  io.d_result_to_wb.valid := d_result_to_wb_valid_reg
+  io.d_result_to_wb.bits := d_result_to_wb_reg
 
   val state = RegInit(0.U(3.W)) // Arbiter state : 0 -> idle, 1 -> reading instruction for ICache,
                                 //                 2 -> reading data for LSQ, 3 -> writing data for WB,
@@ -82,6 +82,9 @@ class MA extends Module {
   // printf("     : io.mem_dout = %d\n", io.mem_dout)
   // printf("     : io.mem_a = %d\n", io.mem_a)
   // printf("     : io.mem_wr = %d\n", io.mem_wr)
+  // printf("     : i_result.valid = %d\n", io.i_result.valid)
+  // printf("     : d_result_to_lsq.valid = %d\n", io.d_result_to_lsq.valid)
+  // printf("     : d_result_to_wb.valid = %d\n", io.d_result_to_wb.valid)
 
   val lsq_max_index = Wire(UInt(2.W))
   lsq_max_index := 0.U
@@ -108,26 +111,6 @@ class MA extends Module {
   } .otherwise {
     switch (state) {
       is (0.U) { // idle
-        when (just_finished_i) {
-          i_result_reg := io.mem_din ## tmp_array(2) ## tmp_array(1) ## tmp_array(0)
-          i_result_valid_reg := true.B
-        } .elsewhen(just_finished_d_lsq) {
-          switch (lsq_max_index) {
-            is (0.U) { d_result_to_lsq_reg := io.mem_din }
-            is (1.U) { d_result_to_lsq_reg := io.mem_din ## tmp_array(0) }
-            is (3.U) { d_result_to_lsq_reg := io.mem_din ## tmp_array(2) ## tmp_array(1) ## tmp_array(0) }
-          }
-          d_result_to_lsq_valid_reg := true.B
-        } .elsewhen(just_finished_d_wb) {
-          switch (wb_max_index) {
-            is (0.U) { d_result_to_wb_reg := io.mem_din }
-            is (1.U) { d_result_to_wb_reg := io.mem_din ## tmp_array(0) }
-            is (3.U) { d_result_to_wb_reg := io.mem_din ## tmp_array(2) ## tmp_array(1) ## tmp_array(0) }
-          }
-          d_result_to_wb_valid_reg := true.B
-        }
-        io.mem_a := 0.U
-
         // priority: WB/LSQ > ICache
         when(io.d_quest_from_wb.valid) {
           when (io.d_quest_from_wb.bits.wr_en) { // write
@@ -228,11 +211,30 @@ class MA extends Module {
       }
 
       is (6.U) { // pause
-        state := 0.U
-        i_result_valid_reg := false.B
-        d_result_to_lsq_valid_reg := false.B
-        d_result_to_wb_valid_reg := false.B
+        when (just_finished_i) {
+          i_result_reg := io.mem_din ## tmp_array(2) ## tmp_array(1) ## tmp_array(0)
+          i_result_valid_reg := true.B
+        } .elsewhen(just_finished_d_lsq) {
+          switch (lsq_max_index) {
+            is (0.U) { d_result_to_lsq_reg := io.mem_din }
+            is (1.U) { d_result_to_lsq_reg := io.mem_din ## tmp_array(0) }
+            is (3.U) { d_result_to_lsq_reg := io.mem_din ## tmp_array(2) ## tmp_array(1) ## tmp_array(0) }
+          }
+          d_result_to_lsq_valid_reg := true.B
+        } .elsewhen(just_finished_d_wb) {
+          switch (wb_max_index) {
+            is (0.U) { d_result_to_wb_reg := io.mem_din }
+            is (1.U) { d_result_to_wb_reg := io.mem_din ## tmp_array(0) }
+            is (3.U) { d_result_to_wb_reg := io.mem_din ## tmp_array(2) ## tmp_array(1) ## tmp_array(0) }
+          }
+          d_result_to_wb_valid_reg := true.B
+        } .otherwise {
+          i_result_valid_reg := false.B
+          d_result_to_lsq_valid_reg := false.B
+          d_result_to_wb_valid_reg := false.B
+        }
         io.mem_a := 0.U
+        state := 0.U
       }
 
     }
