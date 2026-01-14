@@ -6,7 +6,7 @@ class ALUQuest extends Bundle {
   val in2 = UInt(32.W)
   val in3 = UInt(32.W)
   val op = UInt(5.W)
-  val funct = UInt(4.W) // funct7[1] | funct3
+  val funct = UInt(4.W) // funct7[5] | funct3
   val is_zero = Bool()
   val dest = UInt(5.W)
 }
