@@ -149,7 +149,7 @@ class RS extends Module {
           CheckDependence1()
         }
       } .otherwise {
-        new_entry(i).op := entry(i).busy
+        new_entry(i).op := entry(i).op
         new_entry(i).funct := entry(i).funct
         new_entry(i).busy := entry(i).busy
         new_entry(i).immediate_s := entry(i).immediate_s
