@@ -41,7 +41,7 @@ class IF extends Module {
   when (op === "b01100".U) { // R
     io.instruction.bits.funct := raw_instruction(30) ## raw_instruction(14, 12)
   } .elsewhen (op === "b00100".U) { // IA
-    when (raw_instruction(14, 12) === "b101".U) {
+    when (raw_instruction(14, 12) === "b101".U || raw_instruction(14, 12) === "b001".U) {
       io.instruction.bits.funct := raw_instruction(30) ## raw_instruction(14, 12)
       io.instruction.bits.immediate := raw_instruction(24, 20)
     } .otherwise {
@@ -61,7 +61,7 @@ class IF extends Module {
     io.instruction.bits.funct := raw_instruction(14, 12)
     io.instruction.bits.immediate := pc + ((raw_instruction(31) ## raw_instruction(7) ## raw_instruction(30, 25)
       ## raw_instruction(11, 8) ## 0.U(1.W)).asSInt.pad(32).asUInt) // no prediction now
-  } .elsewhen (op === "b11001".U) { // J
+  } .elsewhen (op === "b11011".U) { // J
     io.instruction.bits.immediate := pc + 4.U
   } .elsewhen (op === "b00101".U) { // auipc
     io.instruction.bits.immediate := (raw_instruction(31, 20) ## 0.U(12.W)) + pc
@@ -79,8 +79,8 @@ class IF extends Module {
     val new_pc = Wire(UInt(32.W))
     when (io.instruction.fire) {
       new_pc := pc + 4.U
-      when (op === "b11001".U) {
-        new_pc := (raw_instruction(31) ## raw_instruction(19, 12) ## raw_instruction(20)
+      when (op === "b11011".U) {
+        new_pc := pc + (raw_instruction(31) ## raw_instruction(19, 12) ## raw_instruction(20)
           ## raw_instruction(30, 21) ## 0.U(1.W)).asSInt.pad(32).asUInt
       }
     } .otherwise {

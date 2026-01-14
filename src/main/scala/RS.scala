@@ -59,23 +59,15 @@ class RS extends Module {
     val qry2_value = Input(UInt(32.W))
   })
 
-  io.alu_quest.valid := false.B
-  io.alu_quest.bits.in1 := 0.U
-  io.alu_quest.bits.in2 := 0.U
-  io.alu_quest.bits.in3 := 0.U
-  io.alu_quest.bits.is_zero := false.B
-  io.alu_quest.bits.dest := 0.U
-  io.alu_quest.bits.funct := 0.U
-  io.alu_quest.bits.op := 0.U
   io.qry1_addr := 0.U
   io.qry2_addr := 0.U
   io.qry1_index := 0.U
   io.qry2_index := 0.U
 
-  val entry = Reg(Vec(32, new RSEntry))
+  val entry = RegInit(VecInit(Seq.fill(32)(0.U.asTypeOf(new RSEntry))))
 
   val alu_quest = Reg(new ALUQuest)
-  val alu_quest_valid = Reg(Bool())
+  val alu_quest_valid = RegInit(false.B)
 
   alu_quest_valid := false.B
   alu_quest.is_zero := false.B
@@ -88,6 +80,7 @@ class RS extends Module {
     val new_entry = Wire(Vec(32, new RSEntry))
     val merge_index = Wire(Vec(31, UInt(5.W)))
     for (i <- 0 until 32) {
+      new_entry(i.U) := entry(i.U)
       def CheckDependence1() : Unit = {
         io.qry1_addr := io.new_instruction.bits.rs1
         io.qry1_index := io.qry1_dependence

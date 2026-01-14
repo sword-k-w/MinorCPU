@@ -56,7 +56,7 @@ class LSQ extends Module {
     val store_to_wb = Valid(new AddrValue)
   })
 
-  val entry = Reg(Vec(32, new LSQEntry))
+  val entry = RegInit(VecInit(Seq.fill(32)(0.U.asTypeOf(new LSQEntry))))
   val head = RegInit(0.U(5.W))
   val tail = RegInit(0.U(5.W))
 
@@ -79,6 +79,7 @@ class LSQ extends Module {
   memory_quest_valid := false.B
   broadcast_to_rs_valid := false.B
   broadcast_to_rob_valid := false.B
+  store_to_wb_valid := false.B
 
   new_head := head
   new_tail := tail
@@ -92,6 +93,9 @@ class LSQ extends Module {
       new_entry(i.U) := entry(i.U)
     }
   } .otherwise {
+    when (io.new_instruction.valid) {
+      new_tail := tail + 1.U
+    }
     for (i <- 0 until 32) {
       new_entry(i.U) := entry(i.U)
       when (i.U === tail) {
@@ -99,7 +103,6 @@ class LSQ extends Module {
           new_entry(i.U).instruction := io.new_instruction.bits
           new_entry(i.U).ready := false.B
           new_entry(i.U).dest := io.rob_tail
-          new_tail := tail + 1.U
         }
       } .elsewhen (io.rob_broadcast_result.valid && io.rob_broadcast_result.bits.dest === entry(i.U).dest) {
         new_entry(i.U).ready := true.B
@@ -154,7 +157,7 @@ class LSQ extends Module {
   }
   head := new_head
   tail := new_tail
-  io.new_instruction.ready := new_tail + 1.U === new_head
+  io.new_instruction.ready := new_tail + 1.U =/= new_head
   for (i <- 0 until 32) {
     entry(i.U) := new_entry(i.U)
   }

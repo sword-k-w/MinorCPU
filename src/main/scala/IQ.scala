@@ -39,12 +39,13 @@ class IQ extends Module {
   val new_entry = Wire(Vec(32, new Instruction))
 
   val issue_instruction = Reg(new Instruction)
-  val issue_instruction_valid = Reg(Bool())
+  val issue_instruction_valid = RegInit(false.B)
 
   val new_dependence_valid = RegInit(false.B)
   val new_reg_id = RegInit(0.U(5.W))
 
   issue_instruction_valid := false.B
+  new_dependence_valid := false.B
 
   when (io.predict_failed) {
     new_head := 0.U
@@ -53,13 +54,12 @@ class IQ extends Module {
       new_entry(i) := entry(i)
     }
   } .otherwise {
+    new_tail := Mux(io.new_instruction.valid, tail + 1.U, tail)
     for (i <- 0 until 32) {
       when (i.U === tail && io.new_instruction.valid) {
         new_entry(i) := io.new_instruction.bits
-        new_tail := tail + 1.U
       } .otherwise {
         new_entry(i) := entry(i)
-        new_tail := tail
       }
     }
     when (head =/= new_tail && io.instruction_to_rob.ready && io.instruction_to_lsq.ready) {
@@ -87,5 +87,5 @@ class IQ extends Module {
   for (i <- 0 until 32) {
     entry(i) := new_entry(i)
   }
-  io.new_instruction.ready := new_tail + 1.U === new_head
+  io.new_instruction.ready := new_tail + 1.U =/= new_head
 }

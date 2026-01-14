@@ -57,7 +57,8 @@ class RoB extends Module {
   io.modified_pc.valid := false.B
   io.modified_pc.bits := 0.U
 
-  val entry = Reg(Vec(32, new RoBEntry))
+  val entry = RegInit(VecInit(Seq.fill(32)(0.U.asTypeOf(new RoBEntry))))
+
   val head = RegInit(0.U(5.W))
   val tail = RegInit(0.U(5.W))
   val predict_failed = RegInit(false.B)
@@ -92,10 +93,10 @@ class RoB extends Module {
     new_head := 0.U
     new_tail := 0.U
     predict_failed := false.B
-    for (i <- 0 until 32) {
-      new_entry(i.U) := entry(i.U)
-    }
   } .otherwise {
+    when (io.new_instruction.valid) {
+      new_tail := tail + 1.U
+    }
     for (i <- 0 until 32) {
       when (i.U === io.alu_broadcast_result.bits.dest && io.alu_broadcast_result.valid) {
         new_entry(i.U).ready := true.B // pretend to commit if mmio
@@ -107,11 +108,10 @@ class RoB extends Module {
         new_entry(i.U).value := io.lsq_broadcast_result.bits.value
       } .elsewhen (i.U === io.wb_broadcast_result.bits.dest && io.wb_broadcast_result.valid) {
         new_entry(i.U).mmio_ready := true.B // real commit
-        new_entry(i.U).value := io.lsq_broadcast_result.bits.value
+        new_entry(i.U).value := io.wb_broadcast_result.bits.value
       } .elsewhen (i.U === tail && io.new_instruction.valid) {
         new_entry(i.U).instruction := io.new_instruction.bits
         new_entry(i.U).ready := false.B
-        new_tail := tail + 1.U
       }
     }
 
