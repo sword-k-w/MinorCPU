@@ -133,12 +133,22 @@ class LSQ extends Module {
       }
     } .otherwise {
       when (io.memory_result.valid) {
-        // TODO sign-extended / zero-extended
+        val res = UInt(32.W)
+        res := io.memory_result.bits
+        when (new_entry(head).instruction.funct(2, 0) === 0.U) { // lb (sign-extended)
+          when (io.memory_result.bits(7) === 1.U) {
+            res := 16777215.U(24.W) ## io.memory_result.bits(7, 0)
+          }
+        } .elsewhen (new_entry(head).instruction.funct(2, 0) === 1.U) { // lh (sign-extended)
+          when (io.memory_result.bits(15) === 1.U) {
+            res := 65535.U(16.W) ## io.memory_result.bits(15, 0)
+          }
+        }
         broadcast_to_rs_valid := true.B
-        broadcast_to_rs.value := io.memory_result.bits
+        broadcast_to_rs.value := res
         broadcast_to_rs.dest := new_entry(head).dest
         broadcast_to_rob_valid := true.B
-        broadcast_to_rob.value := io.memory_result.bits
+        broadcast_to_rob.value := res
         broadcast_to_rob.dest := new_entry(head).dest
         new_head := head + 1.U
         when (new_head =/= new_tail && new_entry(new_head).ready) {
