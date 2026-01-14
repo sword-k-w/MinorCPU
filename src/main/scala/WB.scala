@@ -79,6 +79,13 @@ class WB extends Module {
         broadcast_to_rob.dest := new_entry(head).dest
       }
       new_head := head + 1.U
+      when (new_head =/= new_tail) {
+        io.memory_quest.valid := true.B
+        io.memory_quest.bits.addr := new_entry(head).addr
+        io.memory_quest.bits.value := new_entry(head).value
+        io.memory_quest.bits.size := new_entry(head).size
+        io.memory_quest.bits.wr_en := !new_entry(head).mmio
+      }
     } .otherwise {
       io.memory_quest.valid := true.B
       io.memory_quest.bits.addr := new_entry(head).addr
