@@ -29,12 +29,19 @@ class CPU extends Module {
   val lsq = Module(new LSQ)
   val wb = Module(new WB)
   val alu = Module(new ALU)
+  val predictor = Module(new Predictor)
+  val ras = Module(new RAS)
 
   if_.io.quest <> icache.io.quest
   if_.io.quest_result <> icache.io.quest_result
   if_.io.quest_result2 <> icache.io.quest_result2
   if_.io.instruction <> iq.io.new_instruction
   if_.io.modified_pc <> rob.io.modified_pc
+  if_.io.query_pc <> predictor.io.queried_pc
+  if_.io.predict_result <> predictor.io.predict_result
+  if_.io.new_address <> ras.io.new_address
+  if_.io.pop_valid <> ras.io.pop_valid
+  if_.io.jalr_result <> ras.io.top
 
   icache.io.predict_failed <> rob.io.modified_pc.valid
   icache.io.mem_quest <> ma.io.i_quest
@@ -87,6 +94,7 @@ class CPU extends Module {
   rob.io.lsq_broadcast_result <> lsq.io.broadcast_to_rob
   rob.io.broadcast_to_lsq <> lsq.io.rob_broadcast_result
   rob.io.wb_broadcast_result <> wb.io.broadcast_to_rob
+  rob.io.predict_feedback <> predictor.io.update_info
 
   lsq.io.predict_failed <> rob.io.modified_pc.valid
   lsq.io.rob_tail <> rob.io.rob_tail

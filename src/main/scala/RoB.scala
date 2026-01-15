@@ -52,6 +52,8 @@ class RoB extends Module {
     val qry2_value = Output(UInt(32.W))
 
     val rob_tail = Output(UInt(5.W))
+
+    val predict_feedback = ValidIO(new UpdateInfo)
   })
 
   io.modified_pc.valid := false.B
@@ -84,6 +86,10 @@ class RoB extends Module {
   commit_to_rf.rob_id := 0.U
 
   val modified_pc = Reg(UInt(32.W))
+
+  io.predict_feedback.valid := false.B
+  io.predict_feedback.bits.hashed_pc := 0.U
+  io.predict_feedback.bits.actual_result := 0.U
 
   for (i <- 0 until 32) {
     new_entry(i.U) := entry(i.U)
@@ -131,7 +137,10 @@ class RoB extends Module {
         new_head := head + 1.U
       } .elsewhen (new_entry(head).ready && !frozen) {
         when (new_entry(head).instruction.op === "b11000".U) { // branch
-          when (new_entry(head).value =/= 0.U) {
+          io.predict_feedback.valid := true.B
+          io.predict_feedback.bits.actual_result := new_entry(head).value
+          io.predict_feedback.bits.hashed_pc := new_entry(head).instruction.hashed_address
+          when (new_entry(head).value =/= new_entry(head).instruction.predict_taken) {
             predict_failed := true.B
             modified_pc := new_entry(head).instruction.immediate
             // maybe something else need to do?
