@@ -18,19 +18,21 @@ class Predictor extends Module {
   when (io.update_info.valid) {
     val history = local_history(io.update_info.bits.hashed_pc)
     val index = io.update_info.bits.hashed_pc ## history
+    val cfd = TreeMux.TreeMux(index, confidence.toSeq)
+    val lh = TreeMux.TreeMux(io.update_info.bits.hashed_pc, local_history.toSeq)
     when (io.update_info.bits.actual_result) {
-      when (confidence(index) =/= 3.U) {
-        confidence(index) := confidence(index) + 1.U
+      when (cfd =/= 3.U) {
+        confidence(index) := cfd + 1.U
       }
-      local_history(io.update_info.bits.hashed_pc) := local_history(io.update_info.bits.hashed_pc)(0) ## 1.U
+      local_history(io.update_info.bits.hashed_pc) := lh(0) ## 1.U
     } .otherwise {
       when (confidence(index) =/= 0.U) {
         confidence(index) := confidence(index) - 1.U
       }
-      local_history(io.update_info.bits.hashed_pc) := local_history(io.update_info.bits.hashed_pc)(0) ## 0.U
+      local_history(io.update_info.bits.hashed_pc) := lh(0) ## 0.U
     }
   }
 
-  io.predict_result := confidence(io.queried_pc ## local_history(io.queried_pc))(1)
+  io.predict_result := confidence(io.queried_pc ## TreeMux.TreeMux(io.queried_pc, local_history.toSeq))(1)
 
 }

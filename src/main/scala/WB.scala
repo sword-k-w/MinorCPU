@@ -55,48 +55,49 @@ class WB extends Module {
   when (io.new_instruction.valid) {
     for (i <- 0 until 8) {
       when (i.U === tail) {
-        new_entry(i.U) := io.new_instruction.bits
+        new_entry(i) := io.new_instruction.bits
       } .otherwise {
-        new_entry(i.U) := entry(i.U)
+        new_entry(i) := entry(i)
       }
     }
     new_tail := tail + 1.U
   } .otherwise {
     for (i <- 0 until 8) {
-      new_entry(i.U) := entry(i.U)
+      new_entry(i) := entry(i)
     }
     new_tail := tail
   }
 
+  val head_entry = TreeMux.TreeMux(head, new_entry.toSeq)
   when (head =/= new_tail) {
     when (io.memory_result.valid) {
-      when (new_entry(head).mmio) {
+      when (head_entry.mmio) {
         broadcast_to_rs_valid := true.B
         broadcast_to_rs.value := io.memory_result.bits
-        broadcast_to_rs.dest := new_entry(head).dest
+        broadcast_to_rs.dest := head_entry.dest
         broadcast_to_rob_valid := true.B
         broadcast_to_rob.value := io.memory_result.bits
-        broadcast_to_rob.dest := new_entry(head).dest
+        broadcast_to_rob.dest := head_entry.dest
       }
       new_head := head + 1.U
       when (new_head =/= new_tail) {
         io.memory_quest.valid := true.B
-        io.memory_quest.bits.addr := new_entry(head).addr
-        io.memory_quest.bits.value := new_entry(head).value
-        io.memory_quest.bits.size := new_entry(head).size
-        io.memory_quest.bits.wr_en := !new_entry(head).mmio
+        io.memory_quest.bits.addr := head_entry.addr
+        io.memory_quest.bits.value := head_entry.value
+        io.memory_quest.bits.size := head_entry.size
+        io.memory_quest.bits.wr_en := !head_entry.mmio
       }
     } .otherwise {
       io.memory_quest.valid := true.B
-      io.memory_quest.bits.addr := new_entry(head).addr
-      io.memory_quest.bits.value := new_entry(head).value
-      io.memory_quest.bits.size := new_entry(head).size
-      io.memory_quest.bits.wr_en := !new_entry(head).mmio
+      io.memory_quest.bits.addr := head_entry.addr
+      io.memory_quest.bits.value := head_entry.value
+      io.memory_quest.bits.size := head_entry.size
+      io.memory_quest.bits.wr_en := !head_entry.mmio
 //      memory_quest_valid := true.B
-//      memory_quest.addr := new_entry(head).addr
-//      memory_quest.value := new_entry(head).value
-//      memory_quest.size := new_entry(head).size
-//      memory_quest.wr_en := !new_entry(head).mmio
+//      memory_quest.addr := head_entry.addr
+//      memory_quest.value := head_entry.value
+//      memory_quest.size := head_entry.size
+//      memory_quest.wr_en := !head_entry.mmio
     }
   }
 

@@ -64,11 +64,12 @@ class IQ extends Module {
         new_entry(i) := entry(i)
       }
     }
+    val head_entry = TreeMux.TreeMux(head, new_entry.toSeq)
     when (head =/= new_tail && io.instruction_to_rob.ready && io.instruction_to_lsq.ready) {
       issue_instruction_valid := true.B
-      issue_instruction := new_entry(head)
-      new_reg_id := new_entry(head).rd
-      new_dependence_valid := new_entry(head).op =/= "b01000".U && new_entry(head).op =/= "b11000".U
+      issue_instruction := head_entry
+      new_reg_id := head_entry.rd
+      new_dependence_valid := head_entry.op =/= "b01000".U && head_entry.op =/= "b11000".U
       new_head := head + 1.U
     } .otherwise {
       new_head := head

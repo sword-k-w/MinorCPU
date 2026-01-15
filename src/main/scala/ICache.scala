@@ -68,7 +68,7 @@ class ICache(val log_size : Int = 10) extends Module {
         io.mem_quest.bits := io.quest
       }
     } .otherwise {
-      val hit = (valid_array(index) && tag_array(index) === quest_tag)
+      val hit = (TreeMux.TreeMux(index, valid_array.toSeq) && TreeMux.TreeMux(index, tag_array.toSeq) === quest_tag)
       when (hit) {
         quest_result := true.B
       } .otherwise {
