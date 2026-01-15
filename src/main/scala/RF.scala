@@ -42,7 +42,7 @@ class RF extends Module {
   } .otherwise {
     when (io.commit_info.valid && io.commit_info.bits.reg_id =/= 0.U) {
       reg_data(io.commit_info.bits.reg_id) := io.commit_info.bits.value
-      when (io.commit_info.bits.rob_id === dependence(io.commit_info.bits.reg_id)) {
+      when (io.commit_info.bits.rob_id === TreeMux.TreeMux(io.commit_info.bits.reg_id, dependence.toSeq)) {
         has_dependence(io.commit_info.bits.reg_id) := false.B
       }
     }

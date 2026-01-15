@@ -80,7 +80,7 @@ class RS extends Module {
     val new_entry = Wire(Vec(32, new RSEntry))
     val merge_index = Wire(Vec(31, UInt(5.W)))
     for (i <- 0 until 32) {
-      new_entry(i.U) := entry(i.U)
+      new_entry(i) := entry(i)
       def CheckDependence1() : Unit = {
         io.qry1_addr := io.new_instruction.bits.rs1
         io.qry1_index := io.qry1_dependence
@@ -229,24 +229,27 @@ class RS extends Module {
     }
     for (i <- 0 until 8) {
       val index = merge_index(2 * i)
+      val merged_entry = TreeMux.TreeMux(index, new_entry.toSeq)
       merge_index((i + 16).U) :=
-        Mux(new_entry(index).busy && new_entry(index).valid1 && new_entry(index).valid2, index, merge_index(2 * i + 1))
+        Mux(merged_entry.busy && merged_entry.valid1 && merged_entry.valid2, index, merge_index(2 * i + 1))
     }
     for (i <- 0 until 4) {
       val index = merge_index(2 * i + 16)
+      val merged_entry = TreeMux.TreeMux(index, new_entry.toSeq)
       merge_index((i + 24).U) :=
-        Mux(new_entry(index).busy && new_entry(index).valid1 && new_entry(index).valid2, index, merge_index(2 * i + 17))
+        Mux(merged_entry.busy && merged_entry.valid1 && merged_entry.valid2, index, merge_index(2 * i + 17))
     }
     for (i <- 0 until 2) {
       val index = merge_index(2 * i + 24)
+      val merged_entry = TreeMux.TreeMux(index, new_entry.toSeq)
       merge_index((i + 28).U) :=
-        Mux(new_entry(index).busy && new_entry(index).valid1 && new_entry(index).valid2, index, merge_index(2 * i + 25))
+        Mux(merged_entry.busy && merged_entry.valid1 && merged_entry.valid2, index, merge_index(2 * i + 25))
     }
     val tmp_index = merge_index(28)
-    merge_index(30.U) := Mux(new_entry(tmp_index).busy && new_entry(tmp_index).valid1
-      && new_entry(tmp_index).valid2, tmp_index, merge_index(29.U))
+    val tmp_merged_entry = TreeMux.TreeMux(tmp_index, new_entry.toSeq)
+    merge_index(30) := Mux(tmp_merged_entry.busy && tmp_merged_entry.valid1 && tmp_merged_entry.valid2, tmp_index, merge_index(29.U))
 
-    val merged_entry = new_entry(merge_index(30.U))
+    val merged_entry = TreeMux.TreeMux(merge_index(30), new_entry.toSeq)
 
     when (merged_entry.busy && merged_entry.valid1 && merged_entry.valid2) {
       alu_quest_valid := true.B

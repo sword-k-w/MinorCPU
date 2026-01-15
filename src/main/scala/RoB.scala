@@ -92,7 +92,7 @@ class RoB extends Module {
   io.predict_feedback.bits.actual_result := 0.U
 
   for (i <- 0 until 32) {
-    new_entry(i.U) := entry(i.U)
+    new_entry(i) := entry(i)
   }
   new_head := head
   new_tail := tail
@@ -125,43 +125,44 @@ class RoB extends Module {
     }
 
     val frozen = RegInit(false.B) // for mmio
+    val commit_entry = TreeMux.TreeMux(head, new_entry)
     // commit.
     // because the update of entry has one cycle latency, add special judge for commit condition
     when (head =/= new_tail) {
-      when (new_entry(head).mmio_ready) {
+      when (commit_entry.mmio_ready) {
         frozen := false.B
         commit_to_rf_valid := true.B
         commit_to_rf.rob_id := head
-        commit_to_rf.reg_id := new_entry(head).instruction.rd
-        commit_to_rf.value := new_entry(head).value
+        commit_to_rf.reg_id := commit_entry.instruction.rd
+        commit_to_rf.value := commit_entry.value
         new_head := head + 1.U
-      } .elsewhen (new_entry(head).ready && !frozen) {
-        when (new_entry(head).instruction.op === "b11000".U) { // branch
+      } .elsewhen (commit_entry.ready && !frozen) {
+        when (commit_entry.instruction.op === "b11000".U) { // branch
           io.predict_feedback.valid := true.B
-          io.predict_feedback.bits.actual_result := new_entry(head).value
-          io.predict_feedback.bits.hashed_pc := new_entry(head).instruction.hashed_address
-          when (new_entry(head).value =/= new_entry(head).instruction.predict_taken) {
+          io.predict_feedback.bits.actual_result := commit_entry.value
+          io.predict_feedback.bits.hashed_pc := commit_entry.instruction.hashed_address
+          when (commit_entry.value =/= commit_entry.instruction.predict_taken) {
             predict_failed := true.B
-            modified_pc := new_entry(head).instruction.immediate
+            modified_pc := commit_entry.instruction.immediate
             // maybe something else need to do?
             // frozen := false.B (I don't think this is needed)
           }
           new_head := head + 1.U
-        } .elsewhen (new_entry(head).instruction.op === "b11001".U) { // jalr
-          when (new_entry(head).instruction.predict_address =/= new_entry(head).addr(31, 2)) {
+        } .elsewhen (commit_entry.instruction.op === "b11001".U) { // jalr
+          when (commit_entry.instruction.predict_address =/= commit_entry.addr(31, 2)) {
             predict_failed := true.B
-            modified_pc := new_entry(head).addr
+            modified_pc := commit_entry.addr
             // maybe something else need to do?
             // frozen := false.B (I don't think this is needed)
           }
           new_head := head + 1.U
-        } .elsewhen(new_entry(head).instruction.op === "b01000".U || new_entry(head).instruction.mmio) { // S
+        } .elsewhen(commit_entry.instruction.op === "b01000".U || commit_entry.instruction.mmio) { // S
           when (!io.wb_is_full) {
             broadcast_to_lsq_valid := true.B
-            broadcast_to_lsq.addr := new_entry(head).addr
-            broadcast_to_lsq.value := new_entry(head).value
+            broadcast_to_lsq.addr := commit_entry.addr
+            broadcast_to_lsq.value := commit_entry.value
             broadcast_to_lsq.dest := head
-            when (new_entry(head).instruction.mmio) {
+            when (commit_entry.instruction.mmio) {
               frozen := true.B // wait until mmio is finished
             } .otherwise {
               new_head := head + 1.U
@@ -170,8 +171,8 @@ class RoB extends Module {
         } .otherwise {
           commit_to_rf_valid := true.B
           commit_to_rf.rob_id := head
-          commit_to_rf.reg_id := new_entry(head).instruction.rd
-          commit_to_rf.value := new_entry(head).value
+          commit_to_rf.reg_id := commit_entry.instruction.rd
+          commit_to_rf.value := commit_entry.value
           new_head := head + 1.U
         }
       }
@@ -180,7 +181,7 @@ class RoB extends Module {
   io.new_instruction.ready := new_tail + 1.U =/= new_head
 
   for (i <- 0 until 32) {
-    entry(i.U) := new_entry(i.U)
+    entry(i) := new_entry(i)
   }
   head := new_head
   tail := new_tail
