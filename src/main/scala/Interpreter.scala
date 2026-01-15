@@ -107,6 +107,6 @@ class Interpreter extends Module {
   }
 }
 
-object Main extends App {
-  emitVerilog(new Interpreter(), Array("--target-dir", "generated"))
-}
+//object Main extends App {
+//  emitVerilog(new Interpreter(), Array("--target-dir", "generated"))
+//}
