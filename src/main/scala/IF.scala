@@ -16,6 +16,14 @@ class IF extends Module {
     val instruction = Decoupled(new Instruction)
 
     val modified_pc = Flipped(Valid(UInt(32.W)))
+
+    val query_pc = Output(UInt(8.W))
+
+    val predict_result = Input(Bool())
+
+    val new_address = ValidIO(UInt(30.W))
+    val pop_valid = Output(Bool())
+    val jalr_result = Input(UInt(30.W))
   })
 
   val pc = RegInit(0.U(32.W))
@@ -37,7 +45,14 @@ class IF extends Module {
   io.instruction.bits.predict_address := 0.U
   io.instruction.bits.for_jalr := 0.U
   io.instruction.bits.mmio := false.B
+  io.instruction.bits.predict_taken := false.B
 
+  io.instruction.bits.hashed_address := pc(9, 2)
+  io.query_pc := 0.U
+
+  io.new_address.bits := 0.U
+  io.new_address.valid := false.B
+  io.pop_valid := false.B
   when (op === "b01100".U) { // R
     io.instruction.bits.funct := raw_instruction(30) ## raw_instruction(14, 12)
   } .elsewhen (op === "b00100".U) {
@@ -59,8 +74,14 @@ class IF extends Module {
     io.instruction.bits.immediate := (raw_instruction(31, 25) ## raw_instruction(11, 7)).asSInt.pad(32).asUInt
   } .elsewhen (op === "b11000".U) { // B
     io.instruction.bits.funct := raw_instruction(14, 12)
-    io.instruction.bits.immediate := pc + ((raw_instruction(31) ## raw_instruction(7) ## raw_instruction(30, 25)
-      ## raw_instruction(11, 8) ## 0.U(1.W)).asSInt.pad(32).asUInt) // no prediction now
+    io.query_pc := pc(9, 2)
+    io.instruction.bits.predict_taken := io.predict_result
+    when (io.predict_result) {
+      io.instruction.bits.immediate := pc + 4.U
+    } .otherwise {
+      io.instruction.bits.immediate := pc + ((raw_instruction(31) ## raw_instruction(7) ## raw_instruction(30, 25)
+        ## raw_instruction(11, 8) ## 0.U(1.W)).asSInt.pad(32).asUInt) // no prediction now
+    }
   } .elsewhen (op === "b11011".U) { // J
     io.instruction.bits.immediate := pc + 4.U
   } .elsewhen (op === "b00101".U) { // auipc
@@ -78,14 +99,24 @@ class IF extends Module {
 
     val new_pc = Wire(UInt(32.W))
     new_pc := pc + 4.U
-    when (op === "b11011".U) {
+    when (op === "b11011".U) { // jal
+      io.new_address.valid := true.B
+      io.new_address.bits := pc(31, 2) + 1.U
       new_pc := pc + (raw_instruction(31) ## raw_instruction(19, 12) ## raw_instruction(20)
         ## raw_instruction(30, 21) ## 0.U(1.W)).asSInt.pad(32).asUInt
+    }
+    when (op === "b11000".U && io.predict_result) { // B
+      new_pc := pc + ((raw_instruction(31) ## raw_instruction(7) ## raw_instruction(30, 25)
+        ## raw_instruction(11, 8) ## 0.U(1.W)).asSInt.pad(32).asUInt)
+    }
+    when (op === "b11001".U) {
+      io.pop_valid := true.B
+      io.instruction.bits.predict_address := io.jalr_result
+      new_pc := io.jalr_result ## 0.U(2.W)
     }
 
     pc := new_pc
     io.quest := new_pc
-    io.instruction.bits.predict_address := new_pc(31, 2)
   } .otherwise {
     io.quest := pc
     io.instruction.valid := false.B

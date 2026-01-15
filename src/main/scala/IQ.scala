@@ -8,7 +8,9 @@ class Instruction extends Bundle {
   val op = UInt(5.W) // use first five bits
   val funct = UInt(4.W) // funct7[5] | funct3
   val immediate = UInt(32.W)
-  val predict_address = UInt(30.W) // for jalr and branch, store the speculation result to check whether need to restart in RoB
+  val predict_address = UInt(30.W) // for jalr, store the speculation result to check whether need to restart in RoB
+  val predict_taken = Bool() // for branch
+  val hashed_address = UInt(10.W)
   val for_jalr = UInt(12.W)
   val mmio = Bool()
 }
