@@ -92,6 +92,18 @@ class RS extends Module {
           new_entry(i).valid1 := true.B
           new_entry(i).value1 := io.qry1_value
           new_entry(i).depend1 := 0.U
+        } .elsewhen (io.alu_broadcast_result.valid && io.qry1_dependence === io.alu_broadcast_result.bits.dest) {
+          new_entry(i).valid1 := true.B
+          new_entry(i).value1 := io.alu_broadcast_result.bits.value
+          new_entry(i).depend1 := 0.U
+        } .elsewhen (io.lsq_broadcast_result.valid && io.qry1_dependence === io.lsq_broadcast_result.bits.dest) {
+          new_entry(i).valid1 := true.B
+          new_entry(i).value1 := io.lsq_broadcast_result.bits.value
+          new_entry(i).depend1 := 0.U
+        } .elsewhen (io.wb_broadcast_result.valid && io.qry1_dependence === io.wb_broadcast_result.bits.dest) {
+          new_entry(i).valid1 := true.B
+          new_entry(i).value1 := io.wb_broadcast_result.bits.value
+          new_entry(i).depend1 := 0.U
         } .otherwise {
           new_entry(i).valid1 := false.B
           new_entry(i).value1 := 0.U
@@ -108,6 +120,18 @@ class RS extends Module {
         } .elsewhen (io.qry2_ready) {
           new_entry(i).valid2 := true.B
           new_entry(i).value2 := io.qry2_value
+          new_entry(i).depend2 := 0.U
+        } .elsewhen (io.alu_broadcast_result.valid && io.qry2_dependence === io.alu_broadcast_result.bits.dest) {
+          new_entry(i).valid2 := true.B
+          new_entry(i).value2 := io.alu_broadcast_result.bits.value
+          new_entry(i).depend2 := 0.U
+        } .elsewhen (io.lsq_broadcast_result.valid && io.qry2_dependence === io.lsq_broadcast_result.bits.dest) {
+          new_entry(i).valid2 := true.B
+          new_entry(i).value2 := io.lsq_broadcast_result.bits.value
+          new_entry(i).depend2 := 0.U
+        } .elsewhen (io.wb_broadcast_result.valid && io.qry2_dependence === io.wb_broadcast_result.bits.dest) {
+          new_entry(i).valid2 := true.B
+          new_entry(i).value2 := io.wb_broadcast_result.bits.value
           new_entry(i).depend2 := 0.U
         } .otherwise {
           new_entry(i).valid2 := false.B

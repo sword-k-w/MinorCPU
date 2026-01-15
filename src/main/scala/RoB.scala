@@ -83,6 +83,8 @@ class RoB extends Module {
   commit_to_rf.reg_id := 0.U
   commit_to_rf.rob_id := 0.U
 
+  val modified_pc = Reg(UInt(32.W))
+
   for (i <- 0 until 32) {
     new_entry(i.U) := entry(i.U)
   }
@@ -131,8 +133,7 @@ class RoB extends Module {
         when (new_entry(head).instruction.op === "b11000".U) { // branch
           when (new_entry(head).value =/= 0.U) {
             predict_failed := true.B
-            io.modified_pc.valid := true.B
-            io.modified_pc.bits := new_entry(head).instruction.immediate
+            modified_pc := new_entry(head).instruction.immediate
             // maybe something else need to do?
             // frozen := false.B (I don't think this is needed)
           }
@@ -140,8 +141,7 @@ class RoB extends Module {
         } .elsewhen (new_entry(head).instruction.op === "b11001".U) { // jalr
           when (new_entry(head).instruction.predict_address =/= new_entry(head).addr(31, 2)) {
             predict_failed := true.B
-            io.modified_pc.valid := true.B
-            io.modified_pc.bits := new_entry(head).addr
+            modified_pc := new_entry(head).addr
             // maybe something else need to do?
             // frozen := false.B (I don't think this is needed)
           }
@@ -190,4 +190,7 @@ class RoB extends Module {
   io.qry2_value := entry(io.qry2_index).value
 
   io.rob_tail := tail
+
+  io.modified_pc.valid := predict_failed
+  io.modified_pc.bits := modified_pc
 }

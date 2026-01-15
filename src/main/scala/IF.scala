@@ -73,18 +73,14 @@ class IF extends Module {
     pc := io.modified_pc.bits
     io.quest := io.modified_pc.bits
     io.instruction.valid := false.B
-  } .elsewhen (io.quest_result.valid || io.quest_result2.valid) {
+  } .elsewhen ((io.quest_result.valid || io.quest_result2.valid) && io.instruction.ready) {
     io.instruction.valid := true.B
 
     val new_pc = Wire(UInt(32.W))
-    when (io.instruction.fire) {
-      new_pc := pc + 4.U
-      when (op === "b11011".U) {
-        new_pc := pc + (raw_instruction(31) ## raw_instruction(19, 12) ## raw_instruction(20)
-          ## raw_instruction(30, 21) ## 0.U(1.W)).asSInt.pad(32).asUInt
-      }
-    } .otherwise {
-      new_pc := pc
+    new_pc := pc + 4.U
+    when (op === "b11011".U) {
+      new_pc := pc + (raw_instruction(31) ## raw_instruction(19, 12) ## raw_instruction(20)
+        ## raw_instruction(30, 21) ## 0.U(1.W)).asSInt.pad(32).asUInt
     }
 
     pc := new_pc
