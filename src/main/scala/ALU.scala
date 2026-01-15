@@ -60,13 +60,13 @@ class ALU extends Module {
         is ("b0_010".U) { res := (io.quest.bits.in1.asSInt < io.quest.bits.in2.asSInt).asUInt }
         is ("b0_011".U) { res := (io.quest.bits.in1 < io.quest.bits.in2).asUInt }
       }
-    } .elsewhen (io.quest.bits.op(4) === 1.U && io.quest.bits.op(0) === 0.U) {
+    } .elsewhen (io.quest.bits.op(4) === 1.U && io.quest.bits.op(0) === 0.U) { // B
       switch (io.quest.bits.funct(2, 0)) {
         is ("b000".U) { res := (io.quest.bits.in1 === io.quest.bits.in2).asUInt }
         is ("b101".U) { res := (io.quest.bits.in1.asSInt >= io.quest.bits.in2.asSInt).asUInt }
         is ("b111".U) { res := (io.quest.bits.in1 >= io.quest.bits.in2).asUInt }
-        is ("b100".U) { res := (io.quest.bits.in1.asSInt <= io.quest.bits.in2.asSInt).asUInt }
-        is ("b110".U) { res := (io.quest.bits.in1 <= io.quest.bits.in2).asUInt }
+        is ("b100".U) { res := (io.quest.bits.in1.asSInt < io.quest.bits.in2.asSInt).asUInt }
+        is ("b110".U) { res := (io.quest.bits.in1 < io.quest.bits.in2).asUInt }
         is ("b001".U) { res := (io.quest.bits.in1 =/= io.quest.bits.in2).asUInt }
       }
     } .otherwise {
