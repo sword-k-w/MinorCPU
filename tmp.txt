@@ -1,0 +1,6 @@
+make[1]: Entering directory '/home/sword/swordProject/MinorCPU/testcase'
+make[1]: Nothing to be done for 'all'.
+make[1]: Leaving directory '/home/sword/swordProject/MinorCPU/testcase'
+cd /home/sword/swordProject/MinorCPU/testspace && ./test
+VCD info: dumpfile test.vcd opened for output.
+Hello, CPU!! ABBCCCDDDD.IO:Return
