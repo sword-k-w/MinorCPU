@@ -17,7 +17,7 @@ class IF extends Module {
 
     val modified_pc = Flipped(Valid(UInt(32.W)))
 
-    val query_pc = Output(UInt(8.W))
+    val query_pc = Output(UInt(6.W))
 
     val predict_result = Input(Bool())
 
@@ -47,7 +47,7 @@ class IF extends Module {
   io.instruction.bits.mmio := false.B
   io.instruction.bits.predict_taken := false.B
 
-  io.instruction.bits.hashed_address := pc(9, 2)
+  io.instruction.bits.hashed_address := pc(7, 2)
   io.query_pc := 0.U
 
   io.new_address.bits := 0.U
@@ -74,7 +74,7 @@ class IF extends Module {
     io.instruction.bits.immediate := (raw_instruction(31, 25) ## raw_instruction(11, 7)).asSInt.pad(32).asUInt
   } .elsewhen (op === "b11000".U) { // B
     io.instruction.bits.funct := raw_instruction(14, 12)
-    io.query_pc := pc(9, 2)
+    io.query_pc := pc(7, 2)
     io.instruction.bits.predict_taken := io.predict_result
     when (io.predict_result) {
       io.instruction.bits.immediate := pc + 4.U
