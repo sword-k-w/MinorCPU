@@ -1,7 +1,7 @@
 import chisel3._
 import chisel3.util._
 
-class ICache(val log_size : Int = 10) extends Module {
+class ICache(val log_size : Int = 8) extends Module {
   val size = 1 << log_size
 
   val io = IO(new Bundle {

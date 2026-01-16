@@ -12,7 +12,7 @@ class CPU extends Module {
     val io_buffer_full = Input(Bool())
     val dbgreg_dout    = Output(UInt(32.W))
   })
-
+  assert(io.rdy_in, "ready in is false")
   // default
   io.mem_dout := 0.U
   io.mem_a := 0.U
@@ -109,4 +109,15 @@ class CPU extends Module {
 
 object Main extends App {
   emitVerilog(new CPU(), Array("--target-dir", "generated"))
+  emitVerilog(new ALU(), Array("--target-dir", "generated"))
+  emitVerilog(new ICache(), Array("--target-dir", "generated"))
+  emitVerilog(new IF(), Array("--target-dir", "generated"))
+  emitVerilog(new IQ(), Array("--target-dir", "generated"))
+  emitVerilog(new LSQ(), Array("--target-dir", "generated"))
+  emitVerilog(new MA(), Array("--target-dir", "generated"))
+  emitVerilog(new Predictor(), Array("--target-dir", "generated"))
+  emitVerilog(new RAS(), Array("--target-dir", "generated"))
+  emitVerilog(new RF(), Array("--target-dir", "generated"))
+  emitVerilog(new RoB(), Array("--target-dir", "generated"))
+  emitVerilog(new WB(), Array("--target-dir", "generated"))
 }
