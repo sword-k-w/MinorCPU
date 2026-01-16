@@ -292,7 +292,7 @@ class Dcache(val log_size : Int = 10) extends Module {
             write_flag_array(wb_index) := 0.U
           }
         } .otherwise { // keep asking for data
-          io.mem_quest := Mux(io.lsq_quest.valid, io.lsq_quest, io.wb_quest)
+          io.mem_quest := read_task
         }
       }
 
