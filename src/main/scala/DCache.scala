@@ -70,6 +70,19 @@ class Dcache(val log_size : Int = 10) extends Module {
     io.mem_quest.bits := quest
   }
 
+  def CancelMemWritingMission () : Unit = {
+    write_back_task.valid := false.B
+    write_back_task.bits.value := 0.U
+    write_back_task.bits.addr := 0.U
+    write_back_task.bits.size := 0.U
+    write_back_task.bits.wr_en := false.B
+    io.mem_quest.valid := false.B
+    io.mem_quest.bits.value := 0.U
+    io.mem_quest.bits.addr := 0.U
+    io.mem_quest.bits.size := 0.U
+    io.mem_quest.bits.wr_en := false.B
+  }
+
   io.mem_quest.valid := false.B
   io.mem_quest.bits.addr := 0.U
   io.mem_quest.bits.value := 0.U
@@ -95,34 +108,62 @@ class Dcache(val log_size : Int = 10) extends Module {
           } .elsewhen (io.wb_quest.bits.wr_en) { // write
             when (valid_flag_array(wb_index)) { // either hit or crashed
               when (tag_array(wb_index) === wb_quest_tag) { // hit
-                switch (io.wb_quest.bits.size) {
-                  is (0.U) { // sb
-                    origin_value := data_array.read(wb_index)
-                    state := 4.U
-                  }
-                  is (1.U) { // sh
-                    origin_value := data_array.read(wb_index)
-                    state := 4.U
-                  }
-                  is (2.U) { // sw
-                    data_array.write(wb_index, io.wb_quest.bits.value)
-                    write_flag_array(wb_index) := 15.U
-                    state := 0.U
-                  }
+                when (io.wb_quest.bits.size === 2.U) {
+                  data_array.write(wb_index, io.wb_quest.bits.value)
+                  write_flag_array(wb_index) := 15.U
+                  state := 0.U
+                } .otherwise {
+                  origin_value := data_array.read(wb_index)
+                  state := 4.U
                 }
               } .otherwise { // crashed
                 data_in_crash := data_array.read(wb_index)
                 need_mem_write_bytes := write_flag_array(wb_index)
                 state := 3.U
               }
-            } .otherwise {
-              // todo: empty place, just write in
+            } .otherwise { // not valid
+              valid_flag_array(wb_index) := true.B
+              tag_array(wb_index) := wb_quest_tag
+              when (io.wb_quest.bits.size === 2.U) {
+                data_array.write(wb_index, io.wb_quest.bits.value)
+                write_flag_array(wb_index) := 15.U
+                state := 0.U
+              } .otherwise {
+                origin_value := data_array.read(wb_index)
+                state := 4.U
+              }
             }
           } .otherwise { // read
-            // todo
+            when (valid_flag_array(wb_index)) { // either hit or crashed
+              when (tag_array(wb_index) === wb_quest_tag) { // hit
+                wb_hit_result_valid := true.B
+              } .otherwise { // crashed
+                // todo
+              }
+            } .otherwise { // not valid
+              valid_flag_array(wb_index) := true.B
+              tag_array(wb_index) := wb_quest_tag
+              // todo
+            }
           }
         } .elsewhen (io.lsq_quest.valid) { // lsq
           // todo
+          when (io.lsq_quest.bits.addr === special_address_for_io) { // read input / write output, cannot be cached
+            state := 1.U
+            io.mem_quest := io.lsq_quest
+          } .otherwise { // read
+            when (valid_flag_array(lsq_index)) { // either hit or crashed
+              when (tag_array(lsq_index) === lsq_quest_tag) { // hit
+                lsq_hit_result_valid := true.B
+              } .otherwise { // crashed
+                // todo
+              }
+            } .otherwise { // not valid
+              valid_flag_array(lsq_index) := true.B
+              tag_array(lsq_index) := lsq_quest_tag
+              // todo
+            }
+          }
         }
       }
 
@@ -140,7 +181,7 @@ class Dcache(val log_size : Int = 10) extends Module {
       }
 
       is (2.U) { // write crashed data back to memory (full 4 bytes)
-        when (io.mem_result.valid) { // all written back, go to state 5
+        when (io.mem_result.valid) { // all written back, go to state 4
           write_back_task.valid := false.B
           write_back_task.bits.addr := 0.U
           write_back_task.bits.value := 0.U
@@ -217,25 +258,140 @@ class Dcache(val log_size : Int = 10) extends Module {
       }
 
       is (6.U) { // write data crashed by wb-write back to memory (byte 3)
-
+        when (io.mem_result.valid) { // byte 3 has been written back
+          need_mem_write_bytes(3) := 0.U(1.W)
+          when (need_mem_write_bytes(2)) {
+            WriteBackCrashed(wb_index, data_in_crash, 2)
+            state := 7.U
+          } .elsewhen (need_mem_write_bytes(1)) {
+            WriteBackCrashed(wb_index, data_in_crash, 1)
+            state := 8.U
+          } .elsewhen (need_mem_write_bytes(0)) {
+            WriteBackCrashed(wb_index, data_in_crash, 0)
+            state := 9.U
+          } .otherwise { // finished write-into-memory task
+            CancelMemWritingMission()
+            origin_value := data_array.read(wb_index)
+            state := 4.U
+          }
+        } .otherwise { // keep throwing quest
+          io.mem_quest := write_back_task
+        }
       }
 
       is (7.U) { // write data crashed by wb-write back to memory (byte 2)
-
+        when (io.mem_result.valid) { // byte 2 has been written back
+          need_mem_write_bytes(2) := 0.U(1.W)
+          when (need_mem_write_bytes(1)) {
+            WriteBackCrashed(wb_index, data_in_crash, 1)
+            state := 8.U
+          } .elsewhen (need_mem_write_bytes(0)) {
+            WriteBackCrashed(wb_index, data_in_crash, 0)
+            state := 9.U
+          } .otherwise { // finished write-into-memory task
+            CancelMemWritingMission()
+            origin_value := data_array.read(wb_index)
+            state := 4.U
+          }
+        } .otherwise { // keep throwing quest
+          io.mem_quest := write_back_task
+        }
       }
 
       is (8.U) { // write data crashed by wb-write back to memory (byte 1)
-
+        when (io.mem_result.valid) { // byte 1 has been written back
+          need_mem_write_bytes(1) := 0.U(1.W)
+          when (need_mem_write_bytes(0)) {
+            WriteBackCrashed(wb_index, data_in_crash, 0)
+            state := 9.U
+          } .otherwise { // finished write-into-memory task
+            CancelMemWritingMission()
+            origin_value := data_array.read(wb_index)
+            state := 4.U
+          }
+        } .otherwise { // keep throwing quest
+          io.mem_quest := write_back_task
+        }
       }
 
-      is (9.U) { // write data crashed by wb-write back to memory (byte 3)
-
+      is (9.U) { // write data crashed by wb-write back to memory (byte 0)
+        when (io.mem_result.valid) { // byte 0 has been written back
+          need_mem_write_bytes(0) := 0.U(1.W)
+          CancelMemWritingMission()
+          origin_value := data_array.read(wb_index)
+          state := 4.U
+        } .otherwise { // keep throwing quest
+          io.mem_quest := write_back_task
+        }
       }
+
     }
   }
 
   io.lsq_result_hit.valid := lsq_hit_result_valid
-  io.lsq_result_hit.bits := Mux(io.lsq_quest.bits.addr === special_address_for_io, 0.U, data_array.read(lsq_index))
+  when (io.lsq_quest.bits.addr === special_address_for_io) {
+    io.lsq_result_hit.bits := 0.U
+  } .otherwise {
+    switch (io.lsq_quest.bits.size) {
+      is (0.U) { // lb
+        switch (io.lsq_quest.bits.addr(1, 0)) {
+          is (0.U) {
+            io.lsq_result_hit.bits := 0.U(24.W) ## data_array.read(lsq_index)(7, 0)
+          }
+          is (1.U) {
+            io.lsq_result_hit.bits := 0.U(16.W) ## data_array.read(lsq_index)(15, 8) ## 0.U(8.W)
+          }
+          is (2.U) {
+            io.lsq_result_hit.bits := 0.U(8.W) ## data_array.read(lsq_index)(23, 16) ## 0.U(16.W)
+          }
+          is (3.U) {
+            io.lsq_result_hit.bits := data_array.read(lsq_index)(31, 24) ## 0.U(24.W)
+          }
+        }
+      }
+      is (1.U) { // lh
+        when (io.lsq_quest.bits.addr(1, 0) === 2.U) {
+          io.lsq_result_hit.bits := data_array.read(lsq_index)(31, 16) ## 0.U(16.W)
+        } .otherwise {
+          io.lsq_result_hit.bits := 0.U(16.W) ## data_array.read(lsq_index)(15, 0)
+        }
+      }
+      is (2.U) { // lw
+        io.lsq_result_hit.bits := data_array.read(lsq_index)
+      }
+    }
+  }
   io.wb_result_hit.valid := wb_hit_result_valid
-  io.wb_result_hit.bits := Mux(io.wb_quest.bits.addr === special_address_for_io, 0.U, data_array.read(wb_index))
+  when (io.wb_quest.bits.addr === special_address_for_io) {
+    io.wb_result_hit.bits := 0.U
+  } .otherwise {
+    switch (io.wb_quest.bits.size) {
+      is (0.U) { // lb
+        switch (io.wb_quest.bits.addr(1, 0)) {
+          is (0.U) {
+            io.wb_result_hit.bits := 0.U(24.W) ## data_array.read(wb_index)(7, 0)
+          }
+          is (1.U) {
+            io.wb_result_hit.bits := 0.U(16.W) ## data_array.read(wb_index)(15, 8) ## 0.U(8.W)
+          }
+          is (2.U) {
+            io.wb_result_hit.bits := 0.U(8.W) ## data_array.read(wb_index)(23, 16) ## 0.U(16.W)
+          }
+          is (3.U) {
+            io.wb_result_hit.bits := data_array.read(wb_index)(31, 24) ## 0.U(24.W)
+          }
+        }
+      }
+      is (1.U) { // lh
+        when (io.wb_quest.bits.addr(1, 0) === 2.U) {
+          io.wb_result_hit.bits := data_array.read(wb_index)(31, 16) ## 0.U(16.W)
+        } .otherwise {
+          io.wb_result_hit.bits := 0.U(16.W) ## data_array.read(wb_index)(15, 0)
+        }
+      }
+      is (2.U) { // lw
+        io.wb_result_hit.bits := data_array.read(wb_index)
+      }
+    }
+  }
 }
