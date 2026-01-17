@@ -1,4 +1,30 @@
-# minor-cpu
+# Minor CPU
+
+## Contribution
+
+### livandan
+
+- Data Cache (DCache.scala)
+- Memory Arbiter (MA.scala)
+- Branch Predictor (Predictor.scala)
+- handle lbu/lb, lhu/lh
+- most part of unit test
+- Interpreter (not finished because not needed finally)
+- part of MMIO (frontend)
+
+### sword
+
+- Instruction Fetcher (IF.scala)
+- Instruction Queue (IQ.scala)
+- Instruction Cache (ICache.scala)
+- Register File (RF.scala)
+- Reorder Buffer (RoB.scala)
+- Reservation Station (RS.scala)
+- Arithmetic Logical Unit (ALU.scala)
+- Load Store Queue (LSQ.scala)
+- Write Buffer (WB.scala)
+- Return Address Stack (RAS.scala)
+- part of MMIO (backend)
 
 ## How to Get Verilog Version of Our Code
 
