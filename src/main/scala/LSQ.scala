@@ -48,7 +48,8 @@ class LSQ extends Module {
 
     val memory_quest = Valid(new MemoryQuest)
 
-    val memory_result = Flipped(Valid(UInt(32.W)))
+    val hit_result = Flipped(Valid(UInt(32.W)))
+    val miss_result = Flipped(Valid(UInt(32.W)))
 
     val wb_is_empty = Input(Bool())
     val wb_is_full = Input(Bool())
@@ -135,16 +136,16 @@ class LSQ extends Module {
         new_head := head + 1.U
       }
     } .otherwise {
-      when (io.memory_result.valid) {
+      when (io.hit_result.valid) {
         val res = Wire(UInt(32.W))
-        res := io.memory_result.bits
+        res := io.hit_result.bits
         when (head_entry.instruction.funct(2, 0) === 0.U) { // lb (sign-extended)
-          when (io.memory_result.bits(7) === 1.U) {
-            res := 16777215.U(24.W) ## io.memory_result.bits(7, 0)
+          when (io.hit_result.bits(7) === 1.U) {
+            res := 16777215.U(24.W) ## io.hit_result.bits(7, 0)
           }
         } .elsewhen (head_entry.instruction.funct(2, 0) === 1.U) { // lh (sign-extended)
-          when (io.memory_result.bits(15) === 1.U) {
-            res := 65535.U(16.W) ## io.memory_result.bits(15, 0)
+          when (io.hit_result.bits(15) === 1.U) {
+            res := 65535.U(16.W) ## io.hit_result.bits(15, 0)
           }
         }
         broadcast_to_rs_valid := true.B
@@ -166,6 +167,39 @@ class LSQ extends Module {
 //            memory_quest.addr := new_entry(new_head).address
 //            memory_quest.size := new_entry(new_head).instruction.funct(1, 0)
 //            memory_quest.wr_en := false.B
+          }
+        }
+      } .elsewhen (io.miss_result.valid) {
+        val res = Wire(UInt(32.W))
+        res := io.miss_result.bits
+        when (head_entry.instruction.funct(2, 0) === 0.U) { // lb (sign-extended)
+          when (io.miss_result.bits(7) === 1.U) {
+            res := 16777215.U(24.W) ## io.miss_result.bits(7, 0)
+          }
+        } .elsewhen (head_entry.instruction.funct(2, 0) === 1.U) { // lh (sign-extended)
+          when (io.miss_result.bits(15) === 1.U) {
+            res := 65535.U(16.W) ## io.miss_result.bits(15, 0)
+          }
+        }
+        broadcast_to_rs_valid := true.B
+        broadcast_to_rs.value := res
+        broadcast_to_rs.dest := head_entry.dest
+        broadcast_to_rob_valid := true.B
+        broadcast_to_rob.value := res
+        broadcast_to_rob.dest := head_entry.dest
+        new_head := head + 1.U
+        val new_head_entry = TreeMux.TreeMux(new_head, new_entry.toSeq)
+        when (new_head =/= new_tail && new_head_entry.ready) {
+          assert(new_head_entry.instruction.op === "b00000".U, "a committed store occurs behind a uncommitted load!")
+          when (io.wb_is_empty) {
+            io.memory_quest.valid := true.B
+            io.memory_quest.bits.addr := new_head_entry.address
+            io.memory_quest.bits.size := new_head_entry.instruction.funct(1, 0)
+            io.memory_quest.bits.wr_en := false.B
+            //            memory_quest_valid := true.B
+            //            memory_quest.addr := new_entry(new_head).address
+            //            memory_quest.size := new_entry(new_head).instruction.funct(1, 0)
+            //            memory_quest.wr_en := false.B
           }
         }
       } .otherwise {
