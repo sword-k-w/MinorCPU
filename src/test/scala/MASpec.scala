@@ -174,7 +174,7 @@ class MASpec extends AnyFlatSpec with ChiselScalatestTester {
 
       Step()
 
-      // cycle 6 -- loaded byte 4 for ICache
+      // cycle 6 -- begin to handle ICache instruction
       dut.io.predict_failed.poke(false.B)
 
       dut.io.i_quest.valid.poke(true.B)
@@ -188,7 +188,7 @@ class MASpec extends AnyFlatSpec with ChiselScalatestTester {
 
       Step()
 
-      // cycle 7 -- loaded byte 5 for ICache
+      // cycle 7 -- loaded byte 4 for ICache
       dut.io.predict_failed.poke(false.B)
 
       dut.io.i_quest.valid.poke(true.B)
@@ -202,7 +202,7 @@ class MASpec extends AnyFlatSpec with ChiselScalatestTester {
 
       Step()
 
-      // cycle 8 -- loaded byte 6 for ICache
+      // cycle 8 -- loaded byte 5 for ICache
       dut.io.predict_failed.poke(false.B)
 
       dut.io.i_quest.valid.poke(true.B)
@@ -216,42 +216,11 @@ class MASpec extends AnyFlatSpec with ChiselScalatestTester {
 
       Step()
 
-      // cycle 9 -- loaded byte 7 for ICache, ICache quest completed!
-      //            poke DCache read instruction (lh), start wb
+      // cycle 9 -- loaded byte 6 for ICache
       dut.io.predict_failed.poke(false.B)
 
-      dut.io.i_quest.valid.poke(false.B)
-      dut.io.i_quest.bits.poke(0.U)
-
-      dut.io.d_quest.valid.poke(false.B)
-      dut.io.d_quest.bits.addr.poke(0.U)
-      dut.io.d_quest.bits.value.poke(0.U)
-      dut.io.d_quest.bits.size.poke(0.U)
-      dut.io.d_quest.bits.wr_en.poke(false.B)
-
-      Step()
-
-      // cycle 10 -- read the second byte for wb instruction (lh)
-      //             finish wb read!
-      dut.io.predict_failed.poke(false.B)
-
-      dut.io.i_quest.valid.poke(false.B)
-      dut.io.i_quest.bits.poke(0.U)
-
-      dut.io.d_quest.valid.poke(false.B)
-      dut.io.d_quest.bits.addr.poke(0.U)
-      dut.io.d_quest.bits.value.poke(0.U)
-      dut.io.d_quest.bits.size.poke(0.U)
-      dut.io.d_quest.bits.wr_en.poke(false.B)
-
-      Step()
-
-      // cycle 11 -- poke wb read instruction (lb),
-      //             start and immediately complete wb reading mission
-      dut.io.predict_failed.poke(false.B)
-
-      dut.io.i_quest.valid.poke(false.B)
-      dut.io.i_quest.bits.poke(0.U)
+      dut.io.i_quest.valid.poke(true.B)
+      dut.io.i_quest.bits.poke(4.U)
 
       dut.io.d_quest.valid.poke(false.B)
       dut.io.d_quest.bits.addr.poke(0.U)
@@ -263,23 +232,40 @@ class MASpec extends AnyFlatSpec with ChiselScalatestTester {
 
       ShowCurrentMemory()
 
-      // cycle 12 -- poke wb write instruction (sb),
-      //             start and immediately complete wb writing mission
+      // cycle 10 -- loaded byte 7 for ICache, ICache quest completed!
+      //             poke DCache write instruction (sb)
       dut.io.predict_failed.poke(false.B)
 
-      dut.io.i_quest.valid.poke(false.B)
-      dut.io.i_quest.bits.poke(0.U)
+      dut.io.i_quest.valid.poke(true.B)
+      dut.io.i_quest.bits.poke(4.U)
 
-      dut.io.d_quest.valid.poke(false.B)
-      dut.io.d_quest.bits.addr.poke(0.U)
-      dut.io.d_quest.bits.value.poke(0.U)
+      dut.io.d_quest.valid.poke(true.B)
+      dut.io.d_quest.bits.addr.poke(5.U)
+      dut.io.d_quest.bits.value.poke(11.U)
       dut.io.d_quest.bits.size.poke(0.U)
-      dut.io.d_quest.bits.wr_en.poke(false.B)
+      dut.io.d_quest.bits.wr_en.poke(true.B)
 
       Step()
 
       ShowCurrentMemory()
 
+      // cycle 11 -- start and immediately complete data writing mission
+      dut.io.predict_failed.poke(false.B)
+
+      dut.io.i_quest.valid.poke(false.B)
+      dut.io.i_quest.bits.poke(0.U)
+
+      dut.io.d_quest.valid.poke(true.B)
+      dut.io.d_quest.bits.addr.poke(5.U)
+      dut.io.d_quest.bits.value.poke(11.U)
+      dut.io.d_quest.bits.size.poke(0.U)
+      dut.io.d_quest.bits.wr_en.poke(true.B)
+
+      Step()
+
+      ShowCurrentMemory()
+
+      // cycle 12 & 13 -- wait and check
       WaitAndCheck()
 
     }
