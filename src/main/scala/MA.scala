@@ -53,20 +53,20 @@ class MA extends Module {
   io.mem_a := 0.U
   io.mem_wr := false.B
   
-  // printf("(MA) : state = %d\n", state)
-  // printf("     : index = %d\n", index)
-  // printf("     : just_finished_i = %d\n", just_finished_i)
-  // printf("     : just_finished_d = %d\n", just_finished_d)
-  // printf("     : tmp_array(0) = %d\n", tmp_array(0))
-  // printf("     : tmp_array(1) = %d\n", tmp_array(1))
-  // printf("     : tmp_array(2) = %d\n", tmp_array(2))
-  // printf("     : tmp_array(3) = %d\n", tmp_array(3))
-  // printf("     : io.mem_din = %d\n", io.mem_din)
-  // printf("     : io.mem_dout = %d\n", io.mem_dout)
-  // printf("     : io.mem_a = %d\n", io.mem_a)
-  // printf("     : io.mem_wr = %d\n", io.mem_wr)
-  // printf("     : i_result.valid = %d\n", io.i_result.valid)
-  // printf("     : d_result.valid = %d\n", io.d_result.valid)
+  printf("(MA) : state = %d\n", state)
+  printf("     : index = %d\n", index)
+  printf("     : just_finished_i = %d\n", just_finished_i)
+  printf("     : just_finished_d = %d\n", just_finished_d)
+  printf("     : tmp_array(0) = %d\n", tmp_array(0))
+  printf("     : tmp_array(1) = %d\n", tmp_array(1))
+  printf("     : tmp_array(2) = %d\n", tmp_array(2))
+  printf("     : tmp_array(3) = %d\n", tmp_array(3))
+  printf("     : io.mem_din = %d\n", io.mem_din)
+  printf("     : io.mem_dout = %d\n", io.mem_dout)
+  printf("     : io.mem_a = %d\n", io.mem_a)
+  printf("     : io.mem_wr = %d\n", io.mem_wr)
+  printf("     : i_result.valid = %d\n", io.i_result.valid)
+  printf("     : d_result.valid = %d\n", io.d_result.valid)
 
   val d_max_index = Wire(UInt(2.W))
   d_max_index := 0.U
@@ -107,7 +107,7 @@ class MA extends Module {
               }
             }
           } .otherwise { // read
-            state := 4.U(3.W)
+            state := 2.U(3.W)
             io.mem_a := io.d_quest.bits.addr
             index := io.d_quest.bits.addr
             when (d_max_index === 0.U) {
