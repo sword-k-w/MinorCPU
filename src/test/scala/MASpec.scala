@@ -76,17 +76,11 @@ class MASpec extends AnyFlatSpec with ChiselScalatestTester {
         dut.io.i_quest.valid.poke(false.B)
         dut.io.i_quest.bits.poke(0.U)
 
-        dut.io.d_quest_from_lsq.valid.poke(false.B)
-        dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-        dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-        dut.io.d_quest_from_lsq.bits.size.poke(0.U)
-        dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-        dut.io.d_quest_from_wb.valid.poke(false.B)
-        dut.io.d_quest_from_wb.bits.addr.poke(0.U)
-        dut.io.d_quest_from_wb.bits.value.poke(0.U)
-        dut.io.d_quest_from_wb.bits.size.poke(0.U)
-        dut.io.d_quest_from_wb.bits.wr_en.poke(false.B)
+        dut.io.d_quest.valid.poke(false.B)
+        dut.io.d_quest.bits.addr.poke(0.U)
+        dut.io.d_quest.bits.value.poke(0.U)
+        dut.io.d_quest.bits.size.poke(0.U)
+        dut.io.d_quest.bits.wr_en.poke(false.B)
 
         Step()
 
@@ -99,120 +93,84 @@ class MASpec extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.i_quest.valid.poke(false.B)
       dut.io.i_quest.bits.poke(0.U)
 
-      dut.io.d_quest_from_lsq.valid.poke(false.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(false.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(0.U)
-      dut.io.d_quest_from_wb.bits.value.poke(0.U)
-      dut.io.d_quest_from_wb.bits.size.poke(0.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(false.B)
+      dut.io.d_quest.valid.poke(false.B)
+      dut.io.d_quest.bits.addr.poke(0.U)
+      dut.io.d_quest.bits.value.poke(0.U)
+      dut.io.d_quest.bits.size.poke(0.U)
+      dut.io.d_quest.bits.wr_en.poke(false.B)
 
       dut.io.mem_din.poke(0.U)
 
       Step()
 
-      // cycle 1 -- get lsq_quest( <lw> addr: 0 size: 2 expect: 1 at cycle 5 )
+      // cycle 1 -- get d_quest( <lw> addr: 0 size: 2 expect: 1 at cycle 5 )
       //            and i_quest ( bits: 4 expect 2 at cycle 9 )
       dut.io.predict_failed.poke(false.B)
 
       dut.io.i_quest.valid.poke(true.B)
       dut.io.i_quest.bits.poke(4.U)
 
-      dut.io.d_quest_from_lsq.valid.poke(true.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(2.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(false.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(0.U)
-      dut.io.d_quest_from_wb.bits.value.poke(0.U)
-      dut.io.d_quest_from_wb.bits.size.poke(0.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(false.B)
+      dut.io.d_quest.valid.poke(true.B)
+      dut.io.d_quest.bits.addr.poke(0.U)
+      dut.io.d_quest.bits.value.poke(0.U)
+      dut.io.d_quest.bits.size.poke(2.U)
+      dut.io.d_quest.bits.wr_en.poke(false.B)
 
       Step()
 
-      // cycle 2 -- loaded byte 0 for lsq
+      // cycle 2 -- loaded byte 0 for DCache
       dut.io.predict_failed.poke(false.B)
 
       dut.io.i_quest.valid.poke(true.B)
       dut.io.i_quest.bits.poke(4.U)
 
-      dut.io.d_quest_from_lsq.valid.poke(true.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(2.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(false.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(0.U)
-      dut.io.d_quest_from_wb.bits.value.poke(0.U)
-      dut.io.d_quest_from_wb.bits.size.poke(0.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(false.B)
+      dut.io.d_quest.valid.poke(true.B)
+      dut.io.d_quest.bits.addr.poke(0.U)
+      dut.io.d_quest.bits.value.poke(0.U)
+      dut.io.d_quest.bits.size.poke(2.U)
+      dut.io.d_quest.bits.wr_en.poke(false.B)
 
       Step()
 
-      // cycle 3 -- loaded byte 1 for lsq
+      // cycle 3 -- loaded byte 1 for DCache
       dut.io.predict_failed.poke(false.B)
 
       dut.io.i_quest.valid.poke(true.B)
       dut.io.i_quest.bits.poke(4.U)
 
-      dut.io.d_quest_from_lsq.valid.poke(true.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(2.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(false.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(0.U)
-      dut.io.d_quest_from_wb.bits.value.poke(0.U)
-      dut.io.d_quest_from_wb.bits.size.poke(0.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(false.B)
+      dut.io.d_quest.valid.poke(true.B)
+      dut.io.d_quest.bits.addr.poke(0.U)
+      dut.io.d_quest.bits.value.poke(0.U)
+      dut.io.d_quest.bits.size.poke(2.U)
+      dut.io.d_quest.bits.wr_en.poke(false.B)
 
       Step()
 
-      // cycle 4 -- loaded byte 2 for lsq
+      // cycle 4 -- loaded byte 2 for DCache
       dut.io.predict_failed.poke(false.B)
 
       dut.io.i_quest.valid.poke(true.B)
       dut.io.i_quest.bits.poke(4.U)
 
-      dut.io.d_quest_from_lsq.valid.poke(true.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(2.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(false.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(0.U)
-      dut.io.d_quest_from_wb.bits.value.poke(0.U)
-      dut.io.d_quest_from_wb.bits.size.poke(0.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(false.B)
+      dut.io.d_quest.valid.poke(true.B)
+      dut.io.d_quest.bits.addr.poke(0.U)
+      dut.io.d_quest.bits.value.poke(0.U)
+      dut.io.d_quest.bits.size.poke(2.U)
+      dut.io.d_quest.bits.wr_en.poke(false.B)
 
       Step()
 
-      // cycle 5 -- loaded byte 3 for lsq, lsq quest completed!
+      // cycle 5 -- loaded byte 3 for DCache, DCache quest completed!
       dut.io.predict_failed.poke(false.B)
 
       dut.io.i_quest.valid.poke(true.B)
       dut.io.i_quest.bits.poke(4.U)
 
-      dut.io.d_quest_from_lsq.valid.poke(false.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(false.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(0.U)
-      dut.io.d_quest_from_wb.bits.value.poke(0.U)
-      dut.io.d_quest_from_wb.bits.size.poke(0.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(false.B)
+      dut.io.d_quest.valid.poke(false.B)
+      dut.io.d_quest.bits.addr.poke(0.U)
+      dut.io.d_quest.bits.value.poke(0.U)
+      dut.io.d_quest.bits.size.poke(0.U)
+      dut.io.d_quest.bits.wr_en.poke(false.B)
 
       Step()
 
@@ -222,17 +180,11 @@ class MASpec extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.i_quest.valid.poke(true.B)
       dut.io.i_quest.bits.poke(4.U)
 
-      dut.io.d_quest_from_lsq.valid.poke(false.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(false.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(0.U)
-      dut.io.d_quest_from_wb.bits.value.poke(0.U)
-      dut.io.d_quest_from_wb.bits.size.poke(0.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(false.B)
+      dut.io.d_quest.valid.poke(false.B)
+      dut.io.d_quest.bits.addr.poke(0.U)
+      dut.io.d_quest.bits.value.poke(0.U)
+      dut.io.d_quest.bits.size.poke(0.U)
+      dut.io.d_quest.bits.wr_en.poke(false.B)
 
       Step()
 
@@ -242,17 +194,11 @@ class MASpec extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.i_quest.valid.poke(true.B)
       dut.io.i_quest.bits.poke(4.U)
 
-      dut.io.d_quest_from_lsq.valid.poke(false.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(false.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(0.U)
-      dut.io.d_quest_from_wb.bits.value.poke(0.U)
-      dut.io.d_quest_from_wb.bits.size.poke(0.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(false.B)
+      dut.io.d_quest.valid.poke(false.B)
+      dut.io.d_quest.bits.addr.poke(0.U)
+      dut.io.d_quest.bits.value.poke(0.U)
+      dut.io.d_quest.bits.size.poke(0.U)
+      dut.io.d_quest.bits.wr_en.poke(false.B)
 
       Step()
 
@@ -262,38 +208,26 @@ class MASpec extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.i_quest.valid.poke(true.B)
       dut.io.i_quest.bits.poke(4.U)
 
-      dut.io.d_quest_from_lsq.valid.poke(false.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(false.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(0.U)
-      dut.io.d_quest_from_wb.bits.value.poke(0.U)
-      dut.io.d_quest_from_wb.bits.size.poke(0.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(false.B)
+      dut.io.d_quest.valid.poke(false.B)
+      dut.io.d_quest.bits.addr.poke(0.U)
+      dut.io.d_quest.bits.value.poke(0.U)
+      dut.io.d_quest.bits.size.poke(0.U)
+      dut.io.d_quest.bits.wr_en.poke(false.B)
 
       Step()
 
       // cycle 9 -- loaded byte 7 for ICache, ICache quest completed!
-      //            poke wb read instruction (lh), start wb
+      //            poke DCache read instruction (lh), start wb
       dut.io.predict_failed.poke(false.B)
 
       dut.io.i_quest.valid.poke(false.B)
       dut.io.i_quest.bits.poke(0.U)
 
-      dut.io.d_quest_from_lsq.valid.poke(false.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(true.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(4.U)
-      dut.io.d_quest_from_wb.bits.value.poke(0.U)
-      dut.io.d_quest_from_wb.bits.size.poke(1.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(false.B)
+      dut.io.d_quest.valid.poke(false.B)
+      dut.io.d_quest.bits.addr.poke(0.U)
+      dut.io.d_quest.bits.value.poke(0.U)
+      dut.io.d_quest.bits.size.poke(0.U)
+      dut.io.d_quest.bits.wr_en.poke(false.B)
 
       Step()
 
@@ -304,17 +238,11 @@ class MASpec extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.i_quest.valid.poke(false.B)
       dut.io.i_quest.bits.poke(0.U)
 
-      dut.io.d_quest_from_lsq.valid.poke(false.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(true.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(4.U)
-      dut.io.d_quest_from_wb.bits.value.poke(0.U)
-      dut.io.d_quest_from_wb.bits.size.poke(1.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(false.B)
+      dut.io.d_quest.valid.poke(false.B)
+      dut.io.d_quest.bits.addr.poke(0.U)
+      dut.io.d_quest.bits.value.poke(0.U)
+      dut.io.d_quest.bits.size.poke(0.U)
+      dut.io.d_quest.bits.wr_en.poke(false.B)
 
       Step()
 
@@ -325,17 +253,11 @@ class MASpec extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.i_quest.valid.poke(false.B)
       dut.io.i_quest.bits.poke(0.U)
 
-      dut.io.d_quest_from_lsq.valid.poke(false.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(true.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(4.U)
-      dut.io.d_quest_from_wb.bits.value.poke(0.U)
-      dut.io.d_quest_from_wb.bits.size.poke(0.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(false.B)
+      dut.io.d_quest.valid.poke(false.B)
+      dut.io.d_quest.bits.addr.poke(0.U)
+      dut.io.d_quest.bits.value.poke(0.U)
+      dut.io.d_quest.bits.size.poke(0.U)
+      dut.io.d_quest.bits.wr_en.poke(false.B)
 
       Step()
 
@@ -348,186 +270,16 @@ class MASpec extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.i_quest.valid.poke(false.B)
       dut.io.i_quest.bits.poke(0.U)
 
-      dut.io.d_quest_from_lsq.valid.poke(false.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(true.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(4.U)
-      dut.io.d_quest_from_wb.bits.value.poke(7.U)
-      dut.io.d_quest_from_wb.bits.size.poke(0.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(true.B)
+      dut.io.d_quest.valid.poke(false.B)
+      dut.io.d_quest.bits.addr.poke(0.U)
+      dut.io.d_quest.bits.value.poke(0.U)
+      dut.io.d_quest.bits.size.poke(0.U)
+      dut.io.d_quest.bits.wr_en.poke(false.B)
 
       Step()
 
       ShowCurrentMemory()
 
-      WaitAndCheck()
-
-      // cycle 13 -- poke wb write instruction (sh),
-      //             store the first byte immediately
-      dut.io.predict_failed.poke(false.B)
-
-      dut.io.i_quest.valid.poke(false.B)
-      dut.io.i_quest.bits.poke(0.U)
-
-      dut.io.d_quest_from_lsq.valid.poke(false.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(true.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(4.U)
-      dut.io.d_quest_from_wb.bits.value.poke(1024.U)
-      dut.io.d_quest_from_wb.bits.size.poke(1.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(true.B)
-
-      Step()
-
-      ShowCurrentMemory()
-
-      // cycle 14 -- complete sh instruction
-      dut.io.predict_failed.poke(false.B)
-
-      dut.io.i_quest.valid.poke(false.B)
-      dut.io.i_quest.bits.poke(0.U)
-
-      dut.io.d_quest_from_lsq.valid.poke(false.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(true.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(4.U)
-      dut.io.d_quest_from_wb.bits.value.poke(1024.U)
-      dut.io.d_quest_from_wb.bits.size.poke(1.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(true.B)
-
-      Step()
-
-      ShowCurrentMemory()
-
-      // cycle 15 -- poke wb sw instruction
-      dut.io.predict_failed.poke(false.B)
-
-      dut.io.i_quest.valid.poke(false.B)
-      dut.io.i_quest.bits.poke(0.U)
-
-      dut.io.d_quest_from_lsq.valid.poke(false.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(true.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(8.U)
-      dut.io.d_quest_from_wb.bits.value.poke(16909320.U)
-      dut.io.d_quest_from_wb.bits.size.poke(2.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(true.B)
-
-      Step()
-
-      ShowCurrentMemory()
-
-      // cycle 16 -- the second stage of wb sw instruction
-      dut.io.predict_failed.poke(false.B)
-
-      dut.io.i_quest.valid.poke(false.B)
-      dut.io.i_quest.bits.poke(0.U)
-
-      dut.io.d_quest_from_lsq.valid.poke(false.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(true.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(8.U)
-      dut.io.d_quest_from_wb.bits.value.poke(16909320.U)
-      dut.io.d_quest_from_wb.bits.size.poke(2.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(true.B)
-
-      Step()
-
-      ShowCurrentMemory()
-
-      // cycle 17 -- the third stage of wb sw instruction
-      dut.io.predict_failed.poke(false.B)
-
-      dut.io.i_quest.valid.poke(false.B)
-      dut.io.i_quest.bits.poke(0.U)
-
-      dut.io.d_quest_from_lsq.valid.poke(false.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(true.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(8.U)
-      dut.io.d_quest_from_wb.bits.value.poke(16909320.U)
-      dut.io.d_quest_from_wb.bits.size.poke(2.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(true.B)
-
-      Step()
-
-      ShowCurrentMemory()
-
-      // cycle 18 -- complete wb sw instruction
-      dut.io.predict_failed.poke(false.B)
-
-      dut.io.i_quest.valid.poke(false.B)
-      dut.io.i_quest.bits.poke(0.U)
-
-      dut.io.d_quest_from_lsq.valid.poke(false.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(true.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(8.U)
-      dut.io.d_quest_from_wb.bits.value.poke(16909320.U)
-      dut.io.d_quest_from_wb.bits.size.poke(2.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(true.B)
-
-      Step()
-
-      ShowCurrentMemory()
-
-      // cycle 19 -- poke lb
-      dut.io.predict_failed.poke(false.B)
-
-      dut.io.i_quest.valid.poke(false.B)
-      dut.io.i_quest.bits.poke(0.U)
-
-      dut.io.d_quest_from_lsq.valid.poke(false.B)
-      dut.io.d_quest_from_lsq.bits.addr.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.value.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.size.poke(0.U)
-      dut.io.d_quest_from_lsq.bits.wr_en.poke(false.B)
-
-      dut.io.d_quest_from_wb.valid.poke(true.B)
-      dut.io.d_quest_from_wb.bits.addr.poke(16.U)
-      dut.io.d_quest_from_wb.bits.value.poke(0.U)
-      dut.io.d_quest_from_wb.bits.size.poke(0.U)
-      dut.io.d_quest_from_wb.bits.wr_en.poke(false.B)
-
-      Step()
-
-      ShowCurrentMemory()
-
-      // cycle 20 -- check the memory
-      WaitAndCheck()
-
-      // cycle 21 -- check the memory
-      WaitAndCheck()
-
-      // cycle 22 -- check the memory
       WaitAndCheck()
 
     }
