@@ -30,7 +30,9 @@ class LSQSpec extends AnyFlatSpec with ChiselScalatestTester {
     lsq.io.wb_is_empty <> wb.io.is_empty
     lsq.io.store_to_wb <> wb.io.new_instruction
     wb.io.memory_quest <> io.memory_quest_from_wb
-    wb.io.memory_result <> io.memory_result_for_wb
+    // todo: need a new test with separated wb_hit_result and wb_miss_result
+    wb.io.hit_result <> io.memory_result_for_wb
+    wb.io.miss_result <> io.memory_result_for_wb
     lsq.io.predict_failed <> io.predict_failed
     lsq.io.rob_tail <> io.rob_tail
     lsq.io.new_instruction <> io.new_instruction
@@ -39,7 +41,9 @@ class LSQSpec extends AnyFlatSpec with ChiselScalatestTester {
     lsq.io.broadcast_to_rs <> io.broadcast_to_rs
     lsq.io.broadcast_to_rob <> io.broadcast_to_rob
     lsq.io.memory_quest <> io.memory_quest_from_lsq
-    lsq.io.memory_result <> io.memory_result_for_lsq
+    // todo: need a new test with separated lsq_hit_result and lsq_miss_result
+    lsq.io.hit_result <> io.memory_result_for_lsq
+    lsq.io.miss_result <> io.memory_result_for_lsq
     lsq.io.new_instruction.ready <> io.lsq_is_full
   }
 
