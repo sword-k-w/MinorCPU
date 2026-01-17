@@ -1,7 +1,7 @@
 import chisel3._
 import chisel3.util._
 
-class Dcache(val log_size : Int = 10) extends Module {
+class DCache(val log_size : Int = 10) extends Module {
 
   val size = 1 << log_size
 
