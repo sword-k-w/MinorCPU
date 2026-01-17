@@ -1,7 +1,7 @@
 import chisel3._
 import chisel3.util._
 
-class DCache(val log_size : Int = 10) extends Module {
+class DCache(val log_size : Int = 8) extends Module {
 
   val size = 1 << log_size
 
@@ -381,7 +381,7 @@ class DCache(val log_size : Int = 10) extends Module {
 
       is (6.U) { // write crashed data back to memory (byte 3)
         when (io.mem_result.valid) { // byte 3 has been written back
-          need_mem_write_bytes(3) := 0.U(1.W)
+          need_mem_write_bytes := 0.U(1.W) ## need_mem_write_bytes(2, 0)
           when (io.wb_quest.valid) {
             when (need_mem_write_bytes(2)) {
               WriteBackCrashed(wb_index, data_in_crash, 2)
@@ -425,7 +425,7 @@ class DCache(val log_size : Int = 10) extends Module {
 
       is (7.U) { // write crashed data back to memory (byte 2)
         when (io.mem_result.valid) { // byte 2 has been written back
-          need_mem_write_bytes(2) := 0.U(1.W)
+          need_mem_write_bytes := 0.U(2.W) ## need_mem_write_bytes(1, 0)
           when (io.wb_quest.valid) {
             when (need_mem_write_bytes(1)) {
               WriteBackCrashed(wb_index, data_in_crash, 1)
@@ -463,7 +463,7 @@ class DCache(val log_size : Int = 10) extends Module {
 
       is (8.U) { // write crashed data back to memory (byte 1)
         when (io.mem_result.valid) { // byte 1 has been written back
-          need_mem_write_bytes(1) := 0.U(1.W)
+          need_mem_write_bytes := 0.U(3.W) ## need_mem_write_bytes(0)
           when (io.wb_quest.valid) {
             when (need_mem_write_bytes(0)) {
               WriteBackCrashed(wb_index, data_in_crash, 0)
@@ -495,7 +495,7 @@ class DCache(val log_size : Int = 10) extends Module {
 
       is (9.U) { // write crashed data back to memory (byte 0)
         when (io.mem_result.valid) { // byte 0 has been written back
-          need_mem_write_bytes(0) := 0.U(1.W)
+          need_mem_write_bytes := 0.U(4.W)
           when (io.wb_quest.valid) {
             CancelMemWritingMission()
             when (io.wb_quest.bits.wr_en) { // crashed by wb-write
