@@ -22,7 +22,8 @@ class WB extends Module {
 
     val memory_quest = Valid(new MemoryQuest)
 
-    val memory_result = Flipped(Valid(UInt(32.W)))
+    val hit_result = Flipped(Valid(UInt(32.W)))
+    val miss_result = Flipped(Valid(UInt(32.W)))
   })
 
   val head = RegInit(0.U(3.W))
@@ -70,13 +71,30 @@ class WB extends Module {
 
   val head_entry = TreeMux.TreeMux(head, new_entry.toSeq)
   when (head =/= new_tail) {
-    when (io.memory_result.valid) {
+    when (io.hit_result.valid) {
       when (head_entry.mmio) {
         broadcast_to_rs_valid := true.B
-        broadcast_to_rs.value := io.memory_result.bits
+        broadcast_to_rs.value := io.hit_result.bits
         broadcast_to_rs.dest := head_entry.dest
         broadcast_to_rob_valid := true.B
-        broadcast_to_rob.value := io.memory_result.bits
+        broadcast_to_rob.value := io.hit_result.bits
+        broadcast_to_rob.dest := head_entry.dest
+      }
+      new_head := head + 1.U
+      when (new_head =/= new_tail) {
+        io.memory_quest.valid := true.B
+        io.memory_quest.bits.addr := head_entry.addr
+        io.memory_quest.bits.value := head_entry.value
+        io.memory_quest.bits.size := head_entry.size
+        io.memory_quest.bits.wr_en := !head_entry.mmio
+      }
+    } .elsewhen (io.miss_result.valid) {
+      when (head_entry.mmio) {
+        broadcast_to_rs_valid := true.B
+        broadcast_to_rs.value := io.miss_result.bits
+        broadcast_to_rs.dest := head_entry.dest
+        broadcast_to_rob_valid := true.B
+        broadcast_to_rob.value := io.miss_result.bits
         broadcast_to_rob.dest := head_entry.dest
       }
       new_head := head + 1.U
