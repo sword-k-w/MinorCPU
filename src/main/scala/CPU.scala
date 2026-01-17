@@ -21,6 +21,7 @@ class CPU extends Module {
 
   val if_ = Module(new IF)
   val icache = Module(new ICache)
+  val dcache = Module(new DCache)
   val ma = Module(new MA)
   val iq = Module(new IQ)
   val rf = Module(new RF)
@@ -47,15 +48,21 @@ class CPU extends Module {
   icache.io.mem_quest <> ma.io.i_quest
   icache.io.mem_result <> ma.io.i_result
 
+  dcache.io.lsq_result_hit <> lsq.io.hit_result
+  dcache.io.lsq_result_mem <> lsq.io.miss_result
+  dcache.io.wb_result_hit <> wb.io.hit_result
+  dcache.io.wb_result_mem <> wb.io.miss_result
+  dcache.io.mem_quest <> ma.io.d_quest
+  dcache.io.predict_failed <> rob.io.modified_pc.valid
+  dcache.io.lsq_quest <> lsq.io.memory_quest
+  dcache.io.wb_quest <> wb.io.memory_quest
+  dcache.io.mem_result <> ma.io.d_result
+
   ma.io.predict_failed <> rob.io.modified_pc.valid
   ma.io.mem_din <> io.mem_din
   ma.io.mem_dout <> io.mem_dout
   ma.io.mem_a <> io.mem_a
   ma.io.mem_wr <> io.mem_wr
-  ma.io.d_quest_from_lsq <> lsq.io.memory_quest
-  ma.io.d_result_to_lsq <> lsq.io.memory_result
-  ma.io.d_quest_from_wb <> wb.io.memory_quest
-  ma.io.d_result_to_wb <> wb.io.memory_result
 
   iq.io.predict_failed <> rob.io.modified_pc.valid
   iq.io.instruction_to_rob <> rob.io.new_instruction
