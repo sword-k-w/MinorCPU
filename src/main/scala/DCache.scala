@@ -519,9 +519,8 @@ class DCache(val log_size : Int = 8) extends Module {
   }
 
   io.lsq_result_hit.valid := lsq_hit_result_valid
-  when (io.lsq_quest.bits.addr === special_address_for_io) {
-    io.lsq_result_hit.bits := 0.U
-  } .otherwise {
+  io.lsq_result_hit.bits := 0.U
+  when (io.lsq_quest.bits.addr =/= special_address_for_io) {
     switch (io.lsq_quest.bits.size) {
       is (0.U) { // lb
         switch (io.lsq_quest.bits.addr(1, 0)) {
@@ -552,9 +551,8 @@ class DCache(val log_size : Int = 8) extends Module {
     }
   }
   io.wb_result_hit.valid := wb_hit_result_valid
-  when (io.wb_quest.bits.addr === special_address_for_io) {
-    io.wb_result_hit.bits := 0.U
-  } .otherwise {
+  io.wb_result_hit.bits := 0.U
+  when (io.wb_quest.bits.addr =/= special_address_for_io) {
     switch (io.wb_quest.bits.size) {
       is (0.U) { // lb
         switch (io.wb_quest.bits.addr(1, 0)) {
