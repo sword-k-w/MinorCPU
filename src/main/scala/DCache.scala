@@ -36,7 +36,6 @@ class DCache(val log_size : Int = 8) extends Module {
   val data_in_crash = RegInit(0.U(32.W))
   val write_back_task = RegInit(0.U.asTypeOf(Valid(new MemoryQuest)))
   val read_task = RegInit(0.U.asTypeOf(Valid(new MemoryQuest)))
-  val hit_array_data = RegInit(0.U(32.W))
   val state = RegInit(0.U(4.W)) // cache state : 0 -> idle
                                 //               1 -> input/output address shouldn't be cached, pass the quest to MA directly
                                 //               2 -> ask memory for data, when we get data, complete the quest and store it in cache
@@ -59,6 +58,14 @@ class DCache(val log_size : Int = 8) extends Module {
 
   val lsq_hit_result_valid = RegInit(false.B)
   val wb_hit_result_valid = RegInit(false.B)
+
+  val hit_array_data = Reg(UInt(32.W))
+
+  when (tag_array(wb_index) === wb_quest_tag) {
+    hit_array_data := data_array.read(wb_index)
+  } .otherwise {
+    hit_array_data := data_array.read(lsq_index)
+  }
 
   def WriteBackCrashed (crashed_index: UInt, crashed_data: UInt): Unit = {
     val quest = Wire(new MemoryQuest)
@@ -183,7 +190,6 @@ class DCache(val log_size : Int = 8) extends Module {
             when (valid_flag_array(wb_index)) { // either hit or crashed
               when (tag_array(wb_index) === wb_quest_tag) { // hit
                 wb_hit_result_valid := true.B
-                hit_array_data := data_array.read(wb_index)
                 state := 5.U
               } .otherwise { // crashed
                 when (write_flag_array(wb_index) === false.B) { // not dirty, ask memory for data and store it in cache
@@ -210,7 +216,6 @@ class DCache(val log_size : Int = 8) extends Module {
             when (valid_flag_array(lsq_index)) { // either hit or crashed
               when (tag_array(lsq_index) === lsq_quest_tag) { // hit
                 lsq_hit_result_valid := true.B
-                hit_array_data := data_array.read(lsq_index)
                 state := 5.U
               } .otherwise { // crashed
                 when (write_flag_array(lsq_index) === false.B) { // not dirty, ask memory for data and store it in cache
