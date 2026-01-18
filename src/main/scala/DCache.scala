@@ -23,8 +23,10 @@ class DCache(val log_size : Int = 8) extends Module {
     val mem_result = Flipped(Valid(UInt(32.W)))
   })
 
-  val special_address_for_io = Wire(UInt(32.W))
-  special_address_for_io := 196608.U
+  val special_address_for_io_1 = Wire(UInt(32.W))
+  val special_address_for_io_2 = Wire(UInt(32.W))
+  special_address_for_io_1 := 196608.U
+  special_address_for_io_2 := 196612.U
   val origin_value = RegInit(0.U(32.W))
   val data_in_crash = RegInit(0.U(32.W))
   val need_mem_write_bytes = RegInit(0.U(4.W))
@@ -128,7 +130,9 @@ class DCache(val log_size : Int = 8) extends Module {
     switch (state) {
       is (0.U) { // idle
         when (io.wb_quest.valid) { // wb
-          when (io.wb_quest.bits.addr === special_address_for_io) { // read input / write output, cannot be cached
+          when (io.wb_quest.bits.addr === special_address_for_io_1 ||
+              io.wb_quest.bits.addr === special_address_for_io_2) { // read input/clocks or write output/program stop,
+                                                                    // cannot be cached
             state := 1.U
             io.mem_quest := io.wb_quest
           } .elsewhen (io.wb_quest.bits.wr_en) { // write
@@ -181,7 +185,9 @@ class DCache(val log_size : Int = 8) extends Module {
             }
           }
         } .elsewhen (io.lsq_quest.valid) { // lsq
-          when (io.lsq_quest.bits.addr === special_address_for_io) { // read input / write output, cannot be cached
+          when (io.lsq_quest.bits.addr === special_address_for_io_1 ||
+              io.lsq_quest.bits.addr === special_address_for_io_2) { // read input/clocks or write output/program stop,
+                                                                     // cannot be cached
             state := 1.U
             io.mem_quest := io.lsq_quest
           } .otherwise { // read
@@ -521,7 +527,7 @@ class DCache(val log_size : Int = 8) extends Module {
 
   io.lsq_result_hit.valid := lsq_hit_result_valid
   io.lsq_result_hit.bits := 0.U
-  when (io.lsq_quest.bits.addr =/= special_address_for_io) {
+  when (io.lsq_quest.bits.addr =/= special_address_for_io_1) {
     switch (io.lsq_quest.bits.size) {
       is (0.U) { // lb
         switch (io.lsq_quest.bits.addr(1, 0)) {
@@ -553,7 +559,7 @@ class DCache(val log_size : Int = 8) extends Module {
   }
   io.wb_result_hit.valid := wb_hit_result_valid
   io.wb_result_hit.bits := 0.U
-  when (io.wb_quest.bits.addr =/= special_address_for_io) {
+  when (io.wb_quest.bits.addr =/= special_address_for_io_1) {
     switch (io.wb_quest.bits.size) {
       is (0.U) { // lb
         switch (io.wb_quest.bits.addr(1, 0)) {
