@@ -132,8 +132,24 @@ class DCacheSpec extends AnyFlatSpec with ChiselScalatestTester {
         dut.io.wb_quest.bits.addr.poke(wb_address)
       }
 
-      // cycle 0
-      PokeInputs(poke_lsq = false, 0, 0, poke_wb = false, wb_write_enable = false, 0, 0, 0)
+      // cycle 0 -- do nothing
+      PokeInputs(poke_lsq = false, lsq_read_size = 0, lsq_read_address = 0, poke_wb = false, wb_write_enable = false,
+        wb_size = 0, wb_address = 0, wb_write_value = 0)
+      Step()
+
+      // cycle 1 -- poke lsq quest
+      PokeInputs(poke_lsq = true, lsq_read_size = 2, lsq_read_address = 0, poke_wb = false, wb_write_enable = false,
+        wb_size = 0, wb_address = 0, wb_write_value = 0)
+      Step()
+
+      // cycle 2 -- DCache sees and begins to handle lsq quest
+      PokeInputs(poke_lsq = true, lsq_read_size = 2, lsq_read_address = 0, poke_wb = false, wb_write_enable = false,
+        wb_size = 0, wb_address = 0, wb_write_value = 0)
+      Step()
+
+      // cycle 3 -- DCache sees and begins to handle lsq quest
+      PokeInputs(poke_lsq = true, lsq_read_size = 2, lsq_read_address = 0, poke_wb = false, wb_write_enable = false,
+        wb_size = 0, wb_address = 0, wb_write_value = 0)
       Step()
     }
   }
