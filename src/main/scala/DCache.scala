@@ -278,7 +278,7 @@ class DCache(val log_size : Int = 8) extends Module {
             tag_array(lsq_index) := lsq_quest_tag
             write_flag_array(lsq_index) := false.B
           } .otherwise { // complete wb quest, update cache
-            when (wb_quest_reg.bits.wr_en) { // write into crashed/invalid space
+            when (wb_quest_reg.bits.wr_en === true.B) { // write into crashed/invalid space
               val to_store = Wire(UInt(32.W))
               to_store := 0.U
               switch (wb_quest_reg.bits.size) {
@@ -311,7 +311,7 @@ class DCache(val log_size : Int = 8) extends Module {
               }
               data_array.write(wb_index, to_store)
               tag_array(wb_index) := wb_quest_tag
-              write_flag_array := true.B
+              write_flag_array(wb_index) := true.B
               wb_hit_result_valid := true.B
               state := 5.U
             } .otherwise { // wb read
