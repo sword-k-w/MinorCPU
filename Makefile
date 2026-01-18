@@ -17,6 +17,11 @@ ONLINE_JUDGE ?= false
 
 IV_FLAGS := -I$(SRC_DIR) -Wall -Wno-timescale
 
+VERILATOR_FLAGS := -I$(SRC_DIR) -Wall --Wno-fatal -trace --cc --build --top-module testbench --no-timing --Wno-PINCONNECTEMPTY --Wno-WIDTHTRUNC --Wno-WIDTHEXPAND
+ifeq ($(ONLINE_JUDGE), true)
+VERILATOR_FLAGS += -D ONLINE_JUDGE
+endif
+
 ifeq ($(ONLINE_JUDGE), true)
 IV_FLAGS += -D ONLINE_JUDGE
 all: build_sim
@@ -26,7 +31,7 @@ all: testcases build_sim
 endif
 
 testcases:
-	@make -C $(TESTCASE_DIR)
+	@make -s --no-print-directory -C $(TESTCASE_DIR)
 
 _no_testcase_name_check:
 ifndef name
@@ -38,6 +43,8 @@ $(TESTSPACE_DIR):
 
 build_sim: $(SIM_DIR)/testbench.v $(V_SOURCES) $(TESTSPACE_DIR)
 	@iverilog $(IV_FLAGS) -o $(TESTSPACE_DIR)/test $(SIM_DIR)/testbench.v $(V_SOURCES) $(GEN_DIR)/CPU.v
+# 	@rm -rf obj_dir
+# 	@verilator $(VERILATOR_FLAGS) --cc --exe --build -o $(TESTSPACE_DIR)/test $(SIM_DIR)/testbench.v $(V_SOURCES) $(GEN_DIR)/CPU.v $(SIM_DIR)/main.cpp
 
 build_sim_test: testcases _no_testcase_name_check
 	@cp $(SIM_TESTCASE_DIR)/*$(name)*.c $(TESTSPACE_DIR)/test.c
@@ -57,7 +64,7 @@ build_fpga_test: testcases _no_testcase_name_check $(TESTSPACE_DIR)
 	@find $(FPGA_TESTCASE_DIR) -name '*$(name)*.ans' -exec cp {} $(TESTSPACE_DIR)/test.ans \;
 
 run_sim: build_sim build_sim_test
-	cd $(TESTSPACE_DIR) && ./test
+	@cd $(TESTSPACE_DIR) && ./test
 # add your own test script here
 # Example:
 #	diff ./test/test.ans ./test/test.out

@@ -32,5 +32,4 @@ initial begin
 `endif
   #300000000 $finish;
 end
-
 endmodule
