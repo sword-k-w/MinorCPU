@@ -32,7 +32,6 @@ class DCache(val log_size : Int = 8) extends Module {
   val special_address_for_io_2 = Wire(UInt(32.W))
   special_address_for_io_1 := 196608.U
   special_address_for_io_2 := 196612.U
-  val origin_value = RegInit(0.U(32.W))
   val data_in_crash = RegInit(0.U(32.W))
   val write_back_task = RegInit(0.U.asTypeOf(Valid(new MemoryQuest)))
   val read_task = RegInit(0.U.asTypeOf(Valid(new MemoryQuest)))
@@ -66,6 +65,8 @@ class DCache(val log_size : Int = 8) extends Module {
   } .otherwise {
     hit_array_data := data_array.read(lsq_index)
   }
+
+  val origin_value = data_array.read(wb_index)
 
   def WriteBackCrashed (crashed_index: UInt, crashed_data: UInt): Unit = {
     val quest = Wire(new MemoryQuest)
@@ -151,10 +152,10 @@ class DCache(val log_size : Int = 8) extends Module {
                 when (wb_quest_reg.bits.size === 2.U) {
                   wb_hit_result_valid := true.B
                   data_array.write(wb_index, wb_quest_reg.bits.value)
+                  // printf("1 %d %d\n", wb_index, wb_quest_reg.bits.value)
                   write_flag_array(wb_index) := true.B
                   state := 5.U
                 } .otherwise {
-                  origin_value := data_array.read(wb_index)
                   state := 4.U
                 }
               } .otherwise { // crashed
@@ -165,6 +166,7 @@ class DCache(val log_size : Int = 8) extends Module {
                   when (wb_quest_reg.bits.size === 2.U) {
                     wb_hit_result_valid := true.B
                     data_array.write(wb_index, wb_quest_reg.bits.value)
+                    printf("2 %d %d\n", wb_index, wb_quest_reg.bits.value)
                     write_flag_array(wb_index) := true.B
                     state := 5.U
                   } .otherwise {
@@ -179,6 +181,7 @@ class DCache(val log_size : Int = 8) extends Module {
               when (wb_quest_reg.bits.size === 2.U) {
                 wb_hit_result_valid := true.B
                 data_array.write(wb_index, wb_quest_reg.bits.value)
+                printf("3 %d %d\n", wb_index, wb_quest_reg.bits.value)
                 write_flag_array(wb_index) := true.B
                 state := 5.U
               } .otherwise {
@@ -283,6 +286,7 @@ class DCache(val log_size : Int = 8) extends Module {
               }
             }
             data_array.write(lsq_index, io.mem_result.bits)
+            printf("4 %d %d\n", lsq_index, io.mem_result.bits)
             tag_array(lsq_index) := lsq_quest_tag
             write_flag_array(lsq_index) := false.B
           } .otherwise { // complete wb quest, update cache
@@ -318,6 +322,7 @@ class DCache(val log_size : Int = 8) extends Module {
                 }
               }
               data_array.write(wb_index, to_store)
+              printf("5 %d %d\n", wb_index, to_store)
               tag_array(wb_index) := wb_quest_tag
               write_flag_array(wb_index) := true.B
               wb_hit_result_valid := true.B
@@ -353,6 +358,7 @@ class DCache(val log_size : Int = 8) extends Module {
                 }
               }
               data_array.write(wb_index, io.mem_result.bits)
+              printf("6 %d %d\n", wb_index, io.mem_result.bits)
               tag_array(wb_index) := wb_quest_tag
               write_flag_array(wb_index) := false.B
             }
@@ -403,6 +409,7 @@ class DCache(val log_size : Int = 8) extends Module {
         }
         write_flag_array(wb_index) := true.B
         data_array.write(wb_index, to_store)
+        printf("7 %d %d %d %d\n", wb_index, to_store, origin_value, wb_quest_reg.bits.value)
         wb_hit_result_valid := true.B
         state := 5.U
       }
