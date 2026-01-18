@@ -341,6 +341,7 @@ class DCache(val log_size : Int = 8) extends Module {
 
       is (4.U) { // modify and write back (wb write)
         val to_store = Wire(UInt(32.W))
+        to_store := 0.U
         when (io.wb_quest.bits.size === 0.U) { // sb
           switch (io.wb_quest.bits.addr(1, 0)) {
             is (0.U) { // origin(31, 8) ## wb_val(7, 0)
