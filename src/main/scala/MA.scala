@@ -86,7 +86,7 @@ class MA extends Module {
         // priority: DCache > ICache
         when(io.d_quest.valid) {
           when (io.d_quest.bits.wr_en) { // write
-            when (io.d_quest.bits.addr === 0xffffffffL.U(32.W) &&
+            when (io.d_quest.bits.addr === 196612.U(32.W) &&
                 d_max_index === 0.U && io.d_quest.bits.value(7, 0) === 0.U) {
               state := 5.U(3.W)
               i_result_valid_reg := false.B
