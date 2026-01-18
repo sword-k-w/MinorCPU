@@ -32,7 +32,7 @@ class DCache(val log_size : Int = 8) extends Module {
   val special_address_for_io_2 = Wire(UInt(32.W))
   special_address_for_io_1 := 196608.U
   special_address_for_io_2 := 196612.U
-  val data_in_crash = RegInit(0.U(32.W))
+
   val write_back_task = RegInit(0.U.asTypeOf(Valid(new MemoryQuest)))
   val read_task = RegInit(0.U.asTypeOf(Valid(new MemoryQuest)))
   val state = RegInit(0.U(4.W)) // cache state : 0 -> idle
@@ -156,7 +156,6 @@ class DCache(val log_size : Int = 8) extends Module {
                 }
               } .otherwise { // crashed
                 when (write_flag_array(wb_index)) { // dirty, write back, read from memory then write modified data into cache
-                  data_in_crash := data_array.read(wb_index)
                   state := 3.U
                 } .otherwise { // clean, read from memory then write modified data into cache
                   when (wb_quest_reg.bits.size === 2.U) {
@@ -190,7 +189,6 @@ class DCache(val log_size : Int = 8) extends Module {
                   SetReadingMission(wb_quest_reg.bits.addr(31, 2) ## 0.U(2.W))
                   state := 2.U
                 } .otherwise { // dirty, write the dirty bytes back into memory, then ask memory for data and store it in cache
-                  data_in_crash := data_array.read(wb_index)
                   state := 3.U
                 }
               }
@@ -215,7 +213,6 @@ class DCache(val log_size : Int = 8) extends Module {
                   SetReadingMission(lsq_quest_reg.bits.addr(31, 2) ## 0.U(2.W))
                   state := 2.U
                 } .otherwise { // dirty, write the dirty bytes back into memory, then ask memory for data and store it in cache
-                  data_in_crash := data_array.read(lsq_index)
                   state := 3.U
                 }
               }
@@ -356,9 +353,9 @@ class DCache(val log_size : Int = 8) extends Module {
 
       is (3.U) { // write crashed data back to memory
         when (wb_quest_reg.valid) {
-          WriteBackCrashed(wb_index, data_in_crash)
+          WriteBackCrashed(wb_index, hit_array_data_wb)
         } .otherwise { // crashed by lsq-read
-          WriteBackCrashed(lsq_index, data_in_crash)
+          WriteBackCrashed(lsq_index, hit_array_data_lsq)
         }
         state := 6.U
       }
