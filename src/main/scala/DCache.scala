@@ -61,12 +61,9 @@ class DCache(val log_size : Int = 8) extends Module {
   val hit_array_data_lsq = Reg(UInt(32.W))
   val hit_array_data_wb = Reg(UInt(32.W))
 
-  when (tag_array(wb_index) === wb_quest_tag) {
-    hit_array_data_wb := data_array.read(wb_index)
-  } .otherwise {
-    hit_array_data_lsq := data_array.read(lsq_index)
-  }
-
+  hit_array_data_wb := data_array.read(wb_index)
+  hit_array_data_lsq := data_array.read(lsq_index)
+  
   val origin_value = data_array.read(wb_index)
 
   def WriteBackCrashed (crashed_index: UInt, crashed_data: UInt): Unit = {
