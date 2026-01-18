@@ -81,12 +81,13 @@ class WB extends Module {
         broadcast_to_rob.dest := head_entry.dest
       }
       new_head := head + 1.U
+      val new_head_entry = TreeMux.TreeMux(new_head, new_entry.toSeq)
       when (new_head =/= new_tail) {
         io.memory_quest.valid := true.B
-        io.memory_quest.bits.addr := head_entry.addr
-        io.memory_quest.bits.value := head_entry.value
-        io.memory_quest.bits.size := head_entry.size
-        io.memory_quest.bits.wr_en := !head_entry.mmio
+        io.memory_quest.bits.addr := new_head_entry.addr
+        io.memory_quest.bits.value := new_head_entry.value
+        io.memory_quest.bits.size := new_head_entry.size
+        io.memory_quest.bits.wr_en := !new_head_entry.mmio
       }
     } .elsewhen (io.miss_result.valid) {
       when (head_entry.mmio) {
@@ -98,12 +99,13 @@ class WB extends Module {
         broadcast_to_rob.dest := head_entry.dest
       }
       new_head := head + 1.U
+      val new_head_entry = TreeMux.TreeMux(new_head, new_entry.toSeq)
       when (new_head =/= new_tail) {
         io.memory_quest.valid := true.B
-        io.memory_quest.bits.addr := head_entry.addr
-        io.memory_quest.bits.value := head_entry.value
-        io.memory_quest.bits.size := head_entry.size
-        io.memory_quest.bits.wr_en := !head_entry.mmio
+        io.memory_quest.bits.addr := new_head_entry.addr
+        io.memory_quest.bits.value := new_head_entry.value
+        io.memory_quest.bits.size := new_head_entry.size
+        io.memory_quest.bits.wr_en := !new_head_entry.mmio
       }
     } .otherwise {
       io.memory_quest.valid := true.B
