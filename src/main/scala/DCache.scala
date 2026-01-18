@@ -36,12 +36,12 @@ class DCache(val log_size : Int = 8) extends Module {
   val write_back_task = RegInit(0.U.asTypeOf(Valid(new MemoryQuest)))
   val read_task = RegInit(0.U.asTypeOf(Valid(new MemoryQuest)))
   val state = RegInit(0.U(4.W)) // cache state : 0 -> idle
-                                //               1 -> input/output address shouldn't be cached, pass the quest to MA directly
-                                //               2 -> ask memory for data, when we get data, complete the quest and store it in cache
-                                //               3 -> write crashed data back to memory
-                                //               4 -> modify and write back (wb write hit)
-                                //               5 -> a 1-cycle pause for hit
-                                //               6 -> write crashed data back to memory
+  //               1 -> input/output address shouldn't be cached, pass the quest to MA directly
+  //               2 -> ask memory for data, when we get data, complete the quest and store it in cache
+  //               3 -> write crashed data back to memory
+  //               4 -> modify and write back (wb write hit)
+  //               5 -> a 1-cycle pause for hit
+  //               6 -> write crashed data back to memory
 
   // entries
   val data_array = SyncReadMem(size, UInt(32.W))
@@ -58,12 +58,13 @@ class DCache(val log_size : Int = 8) extends Module {
   val lsq_hit_result_valid = RegInit(false.B)
   val wb_hit_result_valid = RegInit(false.B)
 
-  val hit_array_data = Reg(UInt(32.W))
+  val hit_array_data_lsq = Reg(UInt(32.W))
+  val hit_array_data_wb = Reg(UInt(32.W))
 
   when (tag_array(wb_index) === wb_quest_tag) {
-    hit_array_data := data_array.read(wb_index)
+    hit_array_data_wb := data_array.read(wb_index)
   } .otherwise {
-    hit_array_data := data_array.read(lsq_index)
+    hit_array_data_lsq := data_array.read(lsq_index)
   }
 
   val origin_value = data_array.read(wb_index)
@@ -142,8 +143,8 @@ class DCache(val log_size : Int = 8) extends Module {
       is (0.U) { // idle
         when (wb_quest_reg.valid) { // wb
           when (wb_quest_reg.bits.addr === special_address_for_io_1 ||
-              wb_quest_reg.bits.addr === special_address_for_io_2) { // read input/clocks or write output/program stop,
-                                                                     // cannot be cached
+            wb_quest_reg.bits.addr === special_address_for_io_2) { // read input/clocks or write output/program stop,
+            // cannot be cached
             state := 1.U
             io.mem_quest := wb_quest_reg
           } .elsewhen (wb_quest_reg.bits.wr_en) { // write
@@ -211,8 +212,8 @@ class DCache(val log_size : Int = 8) extends Module {
           }
         } .elsewhen (lsq_quest_reg.valid) { // lsq
           when (lsq_quest_reg.bits.addr === special_address_for_io_1 ||
-              lsq_quest_reg.bits.addr === special_address_for_io_2) { // read input/clocks or write output/program stop,
-                                                                      // cannot be cached
+            lsq_quest_reg.bits.addr === special_address_for_io_2) { // read input/clocks or write output/program stop,
+            // cannot be cached
             state := 1.U
             io.mem_quest := lsq_quest_reg
           } .otherwise { // read
@@ -442,28 +443,28 @@ class DCache(val log_size : Int = 8) extends Module {
       is (0.U) { // lb
         switch (lsq_quest_reg.bits.addr(1, 0)) {
           is (0.U) {
-            io.lsq_result_hit.bits := 0.U(24.W) ## hit_array_data(7, 0)
+            io.lsq_result_hit.bits := 0.U(24.W) ## hit_array_data_lsq(7, 0)
           }
           is (1.U) {
-            io.lsq_result_hit.bits := 0.U(24.W) ## hit_array_data(15, 8)
+            io.lsq_result_hit.bits := 0.U(24.W) ## hit_array_data_lsq(15, 8)
           }
           is (2.U) {
-            io.lsq_result_hit.bits := 0.U(24.W) ## hit_array_data(23, 16)
+            io.lsq_result_hit.bits := 0.U(24.W) ## hit_array_data_lsq(23, 16)
           }
           is (3.U) {
-            io.lsq_result_hit.bits := 0.U(24.W) ## hit_array_data(31, 24)
+            io.lsq_result_hit.bits := 0.U(24.W) ## hit_array_data_lsq(31, 24)
           }
         }
       }
       is (1.U) { // lh
         when (lsq_quest_reg.bits.addr(1, 0) === 2.U) {
-          io.lsq_result_hit.bits := 0.U(16.W) ## hit_array_data(31, 16)
+          io.lsq_result_hit.bits := 0.U(16.W) ## hit_array_data_lsq(31, 16)
         } .otherwise {
-          io.lsq_result_hit.bits := 0.U(16.W) ## hit_array_data(15, 0)
+          io.lsq_result_hit.bits := 0.U(16.W) ## hit_array_data_lsq(15, 0)
         }
       }
       is (2.U) { // lw
-        io.lsq_result_hit.bits := hit_array_data
+        io.lsq_result_hit.bits := hit_array_data_lsq
       }
     }
   }
@@ -474,28 +475,28 @@ class DCache(val log_size : Int = 8) extends Module {
       is (0.U) { // lb
         switch (wb_quest_reg.bits.addr(1, 0)) {
           is (0.U) {
-            io.wb_result_hit.bits := 0.U(24.W) ## hit_array_data(7, 0)
+            io.wb_result_hit.bits := 0.U(24.W) ## hit_array_data_wb(7, 0)
           }
           is (1.U) {
-            io.wb_result_hit.bits := 0.U(24.W) ## hit_array_data(15, 8)
+            io.wb_result_hit.bits := 0.U(24.W) ## hit_array_data_wb(15, 8)
           }
           is (2.U) {
-            io.wb_result_hit.bits := 0.U(24.W) ## hit_array_data(23, 16)
+            io.wb_result_hit.bits := 0.U(24.W) ## hit_array_data_wb(23, 16)
           }
           is (3.U) {
-            io.wb_result_hit.bits := 0.U(24.W) ## hit_array_data(31, 24)
+            io.wb_result_hit.bits := 0.U(24.W) ## hit_array_data_wb(31, 24)
           }
         }
       }
       is (1.U) { // lh
         when (wb_quest_reg.bits.addr(1, 0) === 2.U) {
-          io.wb_result_hit.bits := 0.U(16.W) ## hit_array_data(31, 16)
+          io.wb_result_hit.bits := 0.U(16.W) ## hit_array_data_wb(31, 16)
         } .otherwise {
-          io.wb_result_hit.bits := 0.U(16.W) ## hit_array_data(15, 0)
+          io.wb_result_hit.bits := 0.U(16.W) ## hit_array_data_wb(15, 0)
         }
       }
       is (2.U) { // lw
-        io.wb_result_hit.bits := hit_array_data
+        io.wb_result_hit.bits := hit_array_data_wb
       }
     }
   }
