@@ -40,7 +40,7 @@ class DCache(val log_size : Int = 8) extends Module {
                                 //               1 -> input/output address shouldn't be cached, pass the quest to MA directly
                                 //               2 -> ask memory for data, when we get data, complete the quest and store it in cache
                                 //               3 -> write crashed data back to memory
-                                //               4 -> modify and write back (wb write that hit or memory-loaded-crash/invalid)
+                                //               4 -> modify and write back (wb write hit)
                                 //               5 -> a 1-cycle pause for hit
                                 //               6 -> write crashed data back to memory
 
@@ -363,7 +363,7 @@ class DCache(val log_size : Int = 8) extends Module {
         state := 6.U
       }
 
-      is (4.U) { // modify and write back (wb write that hit or memory-loaded-crash/invalid)
+      is (4.U) { // modify and write back (wb write hit)
         val to_store = Wire(UInt(32.W))
         to_store := 0.U
         when (wb_quest_reg.bits.size === 0.U) { // sb
@@ -405,20 +405,13 @@ class DCache(val log_size : Int = 8) extends Module {
 
       is (6.U) { // write crashed data back to memory
         when (io.mem_result.valid) { // dirty word has been written back
+          CancelMemWritingMission()
           when (wb_quest_reg.valid) {
-            CancelMemWritingMission()
-            when (wb_quest_reg.bits.wr_en) { // crashed by wb-write
-              origin_value := data_array.read(wb_index)
-              state := 4.U
-            } .otherwise { // crashed by wb-read
-              SetReadingMission(wb_quest_reg.bits.addr(31, 2) ## 0.U(2.W))
-              state := 2.U
-            }
+            SetReadingMission(wb_quest_reg.bits.addr(31, 2) ## 0.U(2.W))
           } .otherwise { // crashed by lsq-read
-            CancelMemWritingMission()
             SetReadingMission(lsq_quest_reg.bits.addr(31, 2) ## 0.U(2.W))
-            state := 2.U
           }
+          state := 2.U
         } .otherwise { // keep throwing quest
           io.mem_quest := write_back_task
         }
