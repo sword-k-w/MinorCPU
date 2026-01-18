@@ -42,6 +42,7 @@ class DCache(val log_size : Int = 8) extends Module {
                                 //               2 -> ask memory for data, when we get data, complete the quest and store it in cache
                                 //               3 -> write crashed data back to memory (begin)
                                 //               4 -> modify and write back (wb write)
+                                //               5 -> a 1-cycle pause for write hit
                                 //               6 -> write crashed data back to memory (byte 3)
                                 //               7 -> write crashed data back to memory (byte 2)
                                 //               8 -> write crashed data back to memory (byte 1)
@@ -144,9 +145,10 @@ class DCache(val log_size : Int = 8) extends Module {
             when (valid_flag_array(wb_index)) { // either hit or crashed
               when (tag_array(wb_index) === wb_quest_tag) { // hit
                 when (wb_quest_reg.bits.size === 2.U) {
+                  wb_hit_result_valid := true.B
                   data_array.write(wb_index, wb_quest_reg.bits.value)
                   write_flag_array(wb_index) := 15.U
-                  state := 0.U
+                  state := 5.U
                 } .otherwise {
                   origin_value := data_array.read(wb_index)
                   state := 4.U
@@ -388,6 +390,11 @@ class DCache(val log_size : Int = 8) extends Module {
           write_flag_array(wb_index) := 15.U(4.W)
         }
         data_array.write(wb_index, to_store)
+        wb_hit_result_valid := true.B
+        state := 5.U
+      }
+
+      is (5.U) { // a 1-cycle pause for write hit
         state := 0.U
       }
 
