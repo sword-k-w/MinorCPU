@@ -1,5 +1,13 @@
 # Minor CPU
 
+supporting rv32i
+
+## Optimization Mechanism
+
+- Out of Order
+- Cache
+- Branch Prediction
+
 ## Contribution
 
 ### livandan (Wenzhen Li)
@@ -40,7 +48,7 @@ Frontend interacts with memory, including fetching instructions and handling mem
 
 #### Instruction Fetcher(IF)
 
-It contains a PC(reg) in it and constantly sends quest to ICache to get next instruction. When fetching a valid (raw) instruction, IF decodes it and queries Predictor or RAS to get next PC if it is a branch or jalr. 
+It contains a PC(reg) in it and constantly sends quest to ICache to get next instruction. When fetching a valid (raw) instruction, IF decodes it and queries Predictor or RAS to get next PC if it is a branch or jalr.
 
 If the new instruction is valid and IQ is ready, the new instruction will be sent to IQ and PC will be next PC in the next cycle.
 
@@ -54,7 +62,7 @@ It is a buffer for instructions. It gets instruction from IF when not full and i
 
 #### Data Cache(DCache)
 
-1-way. contains a state machine. difference from ICache : the length of data can be 1/2/4 byte(s); supporting data write. 
+1-way. contains a state machine. difference from ICache : the length of data can be 1/2/4 byte(s); supporting data write.
 
 #### Memory Arbiter (MA)
 
@@ -74,7 +82,7 @@ It tracks the call sequence. jal pushes PC + 4 onto RAS and jalr asks the top of
 
 #### Register File (RF)
 
-32 reg and dependence. Add dependence when IQ issues and eliminate dependence when RoB commits. 
+32 reg and dependence. Add dependence when IQ issues and eliminate dependence when RoB commits.
 
 #### Reservation Station (RS)
 
@@ -103,7 +111,65 @@ Each cycle, LSQ:
 
 #### Write Buffer (WB)
 
-sends write quest to DCache. Never reflush.
+sends write quest to DCache. Never flush.
+
+## Performance Analysis
+
+### Test1
+
+run following instructions (n=300).
+
+```
+int i;
+for ( i = 0; i < n; i++ )
+  c[i] = a[i] + b[i];
+```
+
+```
+144:	0007a703          	lw	a4,0(a5)
+148:	0006a583          	lw	a1,0(a3)
+14c:	00478793          	addi	a5,a5,4
+150:	00468693          	addi	a3,a3,4
+154:	00b70733          	add	a4,a4,a1
+158:	00e62023          	sw	a4,0(a2)
+15c:	00460613          	addi	a2,a2,4
+160:	fea792e3          	bne	a5,a0,144 <main+0x48>
+```
+
+9409 cycle in total, 3.920 cpi
+
+bottleneck: load & store. 
+
+DCache failed to demonstrate its advantages.
+
+### Test2
+
+run following instructions.
+
+```
+int a[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+for (int i = 0; i < 100; ++i) {
+  for (int j = 1; j < 10; ++j) {
+    a[j] += a[j - 1];
+  }
+}
+```
+
+```
+14c:	01812703          	lw	a4,24(sp)
+150:	01810793          	addi	a5,sp,24
+154:	0047a683          	lw	a3,4(a5)
+158:	00478793          	addi	a5,a5,4
+15c:	00d70733          	add	a4,a4,a3
+160:	00e7a023          	sw	a4,0(a5)
+164:	fec798e3          	bne	a5,a2,154 <main+0x88>
+168:	fff58593          	addi	a1,a1,-1
+16c:	fe0590e3          	bnez	a1,14c <main+0x80>
+```
+
+13144 cycle in total, 1.826 cpi
+
+DCache and OoO work well.
 
 ## How to Handle MMIO
 
@@ -120,7 +186,7 @@ sends write quest to DCache. Never reflush.
   2. When ALU broadcasts it isn't, RoB updates it state and pretends to commit it.
 
   3. When WB broadcasts the final result, RoB commit it.
-  
+
 - LSQ:
 
   1. Initially, LSQ regards it as a normal load.
