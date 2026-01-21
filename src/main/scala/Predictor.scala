@@ -12,7 +12,7 @@ class Predictor extends Module {
     val queried_pc = Input(UInt(6.W))
     val predict_result = Output(Bool())
   })
-  val confidence = RegInit(VecInit(Seq.fill(256)(0.U(2.W)))) // index: pc(12, 2) ## the_second_latest ## latest
+  val confidence = RegInit(VecInit(Seq.fill(256)(0.U(2.W)))) // index: pc(7, 2) ## the_second_latest ## latest
   val local_history = RegInit(VecInit(Seq.fill(64)(0.U(2.W))))
 
   when (io.update_info.valid) {
